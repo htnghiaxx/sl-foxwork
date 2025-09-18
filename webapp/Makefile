@@ -36,6 +36,7 @@ endif
 restart: | stop run ## Restarts the app
 
 .PHONY: dev
+dev: export MM_SERVICESETTINGS_SITEURL=http://localhost:8065
 dev: node_modules ## Runs app with webpack-dev-server
 	npm run dev-server
 

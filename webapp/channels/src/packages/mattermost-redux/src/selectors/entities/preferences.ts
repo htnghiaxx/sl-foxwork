@@ -185,14 +185,9 @@ export const getTheme: (state: GlobalState) => Theme = createShallowSelector(
     'getTheme',
     getThemePreference,
     getDefaultTheme,
-    (themePreference, defaultTheme): Theme => {
-        const themeValue: Theme | string = themePreference?.value ?? defaultTheme;
-
-        // A custom theme will be a JSON-serialized object stored in a preference
-        // At this point, the theme should be a plain object
-        const theme: Theme = typeof themeValue === 'string' ? JSON.parse(themeValue) : themeValue;
-
-        return setThemeDefaults(theme);
+    () => {
+        // Force a single orange theme across the app regardless of user or system settings
+        return setThemeDefaults(Preferences.THEMES.denim);
     },
 );
 

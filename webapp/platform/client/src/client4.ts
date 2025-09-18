@@ -824,6 +824,27 @@ export default class Client4 {
         );
     };
 
+    // Odoo login: authenticate via server's Odoo bridge, then rely on subsequent getMe()
+    loginOdoo = async (identifier: string, password: string) => {
+        const body: any = {
+            identifier,
+            password,
+        };
+
+        // Endpoint returns minimal info; cookies/session will be set by server.
+        // We intentionally ignore the response body here.
+        return this.doFetch<{
+            user_id: string;
+            username: string;
+            email: string;
+            create: boolean;
+            updated_fields: string[];
+        }>(
+            `${this.getUsersRoute()}/login/odoo`,
+            {method: 'post', body: JSON.stringify(body)},
+        );
+    };
+
     logout = async () => {
         const {response} = await this.doFetchWithResponse(
             `${this.getUsersRoute()}/logout`,

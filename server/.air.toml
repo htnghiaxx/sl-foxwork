@@ -1,0 +1,59 @@
+# Air config for Mattermost development
+# Docs: https://github.com/cosmtrek/air
+
+root = "."
+tmp_dir = "tmp"
+
+[log]
+  time = true
+  color = true
+
+[misc]
+  clean_on_exit = true
+
+[build]
+  # Build the Mattermost server binary (working dir: server/)
+  cmd = "go build -o ./tmp/mattermost-dev ./cmd/mattermost"
+  bin = "tmp/mattermost-dev"
+
+  # Pass config path relative to server/
+  args_bin = ["--config", "config/config.json"]
+
+  # Debounce rapid changes
+  delay = 1000
+
+  # Send SIGINT for graceful shutdown
+  send_interrupt = true
+  kill_delay = 500
+
+  # Watch settings (relative to server/)
+  include_dir = [
+    ".",
+    "../api",
+    "channels",
+    "../tools/mmgotool",
+  ]
+  include_ext = [
+    "go", "tmpl", "html", "mjml", "css", "sql", "json", "yaml", "yml",
+  ]
+  exclude_dir = [
+    "build",
+    "bin",
+    "tmp",
+    "public",
+    "tests",
+    "../webapp",
+    "../e2e-tests",
+    "../node_modules",
+  ]
+  exclude_regex = ["_test\\.go$"]
+
+# Environment loading (dotenv)
+[env]
+  # Load order: later overrides earlier
+  include = [
+    ".env",
+  ]
+  exclude = []
+  keep = []
+  replace = true

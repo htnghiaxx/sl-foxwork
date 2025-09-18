@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -1835,6 +1836,7 @@ func sendPasswordReset(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func login(c *Context, w http.ResponseWriter, r *http.Request) {
+	c.Logger.Debug("login")
 	// Mask all sensitive errors, with the exception of the following
 	defer func() {
 		if c.Err == nil {
@@ -1902,8 +1904,107 @@ func login(c *Context, w http.ResponseWriter, r *http.Request) {
 	mfaToken := props["token"]
 	deviceId := props["device_id"]
 	ldapOnly := props["ldap_only"] == "true"
-
 	auditRec := c.MakeAuditRecord(model.AuditEventLogin, model.AuditStatusFail)
+	c.Logger.Debug("login", mlog.String("odoo_sso_enabled", os.Getenv("MM_ODOO_SSO_ENABLED")), mlog.String("odoo_base_url", os.Getenv("MM_ODOO_BASE_URL")), mlog.String("odoo_db", os.Getenv("MM_ODOO_DB")), mlog.String("odoo_jsonrpc_path", os.Getenv("MM_ODOO_JSONRPC_PATH")), mlog.String("odoo_timeout_ms", os.Getenv("MM_ODOO_TIMEOUT_MS")))
+
+	// If Odoo SSO bridge is enabled, try Odoo first. Only fallback to DB on invalid credentials (uid == 0).
+	if strings.EqualFold(os.Getenv("MM_ODOO_SSO_ENABLED"), "true") || os.Getenv("MM_ODOO_SSO_ENABLED") == "1" || strings.EqualFold(os.Getenv("MM_ODOO_SSO_ENABLED"), "on") {
+		baseURL := strings.TrimRight(os.Getenv("MM_ODOO_BASE_URL"), "/")
+		dbName := os.Getenv("MM_ODOO_DB")
+		jsonrpcPath := os.Getenv("MM_ODOO_JSONRPC_PATH")
+		if jsonrpcPath == "" {
+			jsonrpcPath = "/jsonrpc"
+		}
+		if baseURL != "" && dbName != "" && loginId != "" && password != "" {
+			// prepare http client
+			timeoutMs := 8000
+			if v := os.Getenv("MM_ODOO_TIMEOUT_MS"); v != "" {
+				if n, err := strconv.Atoi(v); err == nil && n > 0 {
+					timeoutMs = n
+				}
+			}
+			httpClient := &http.Client{Timeout: time.Duration(timeoutMs) * time.Millisecond}
+
+			// call Odoo authenticate
+			authPayload := jsonRPCRequest{
+				JSONRPC: "2.0",
+				Method:  "call",
+				Params: map[string]interface{}{
+					"db":       dbName,
+					"login":    loginId,
+					"password": password,
+				},
+				ID: 1,
+			}
+			uid, appErr := callOdooAuthenticate(httpClient, baseURL+"/web/session/authenticate", authPayload)
+			if appErr != nil {
+				// Upstream error: return error only if it's not just invalid credentials
+				// callOdooAuthenticate returns (0, nil) for invalid creds; any non-nil error here is upstream
+				c.Err = appErr
+				return
+			}
+			if uid > 0 {
+				// Odoo credentials valid: fetch user info and login/create user
+				_, username, displayName, appErr := fetchOdooUserInfo(httpClient, baseURL+jsonrpcPath, dbName, uid, password)
+				if appErr != nil {
+					c.Err = appErr
+					return
+				}
+				if username == "" {
+					username = loginId
+				}
+				email := fmt.Sprintf("odoo_%d@odoo.local", uid)
+				mmUser, _ := c.App.GetUserByEmail(email)
+				if mmUser == nil {
+					u := &model.User{
+						Username:    model.CleanUsername(c.Logger, strings.Split(username, "@")[0]),
+						Email:       email,
+						FirstName:   displayName,
+						AuthService: "odoo",
+					}
+					if u.Username == "" {
+						u.Username = model.NewId()[:12]
+					}
+					var cerr *model.AppError
+					mmUser, cerr = c.App.CreateUser(c.AppContext, u)
+					if cerr != nil {
+						c.Err = cerr
+						return
+					}
+				}
+				isMobileDevice := utils.IsMobileRequest(r)
+				session, err := c.App.DoLogin(c.AppContext, w, r, mmUser, deviceId, isMobileDevice, false, false)
+				if err != nil {
+					c.Err = err
+					return
+				}
+				c.AppContext = c.AppContext.WithSession(session)
+				// Mirror normal login flow post-auth
+				c.LogAuditWithUserId(mmUser.Id, "authenticated")
+				if r.Header.Get(model.HeaderRequestedWith) == model.HeaderRequestedWithXML {
+					c.App.AttachSessionCookies(c.AppContext, w, r)
+				}
+				userTermsOfService, terr := c.App.GetUserTermsOfService(mmUser.Id)
+				if terr != nil && terr.StatusCode != http.StatusNotFound {
+					c.Err = terr
+					return
+				}
+				if userTermsOfService != nil {
+					mmUser.TermsOfServiceId = userTermsOfService.TermsOfServiceId
+					mmUser.TermsOfServiceCreateAt = userTermsOfService.CreateAt
+				}
+				mmUser.Sanitize(map[string]bool{})
+				auditRec.AddEventResultState(mmUser)
+				auditRec.Success()
+				if err := json.NewEncoder(w).Encode(mmUser); err != nil {
+					c.Logger.Warn("Error while writing response", mlog.Err(err))
+				}
+				return
+			}
+			// uid == 0 => invalid credentials: fall through to normal DB auth
+		}
+	}
+
 	defer c.LogAuditRec(auditRec)
 	model.AddEventParameterToAuditRec(auditRec, "login_id", loginId)
 	model.AddEventParameterToAuditRec(auditRec, "device_id", deviceId)

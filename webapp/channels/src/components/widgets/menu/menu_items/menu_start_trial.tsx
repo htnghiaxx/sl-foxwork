@@ -35,6 +35,7 @@ type Props = {
 }
 
 const MenuStartTrial = (props: Props): JSX.Element | null => {
+    return null;
     const {formatMessage} = useIntl();
 
     const license = useSelector(getLicense);

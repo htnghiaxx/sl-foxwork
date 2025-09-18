@@ -40,6 +40,63 @@
           $ref: "#/components/responses/BadRequest"
         "403":
           $ref: "#/components/responses/Forbidden"
+  /api/v4/users/login/odoo:
+    post:
+      tags:
+        - users
+      summary: Login to Mattermost via Odoo
+      description: >
+        Authenticate the user against an Odoo instance configured on the server.
+
+        __Minimum server version__: 10.x
+
+        ##### Permissions
+
+        No permission required
+      operationId: LoginViaOdoo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - password
+              properties:
+                identifier:
+                  type: string
+                  description: Email or login identifier used for Odoo authentication
+                password:
+                  type: string
+                  description: Password for Odoo authentication
+        description: Odoo authentication object
+        required: true
+      responses:
+        "200":
+          description: User login successful via Odoo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: string
+                  username:
+                    type: string
+                  email:
+                    type: string
+                  create:
+                    type: boolean
+                  updated_fields:
+                    type: array
+                    items:
+                      type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "502":
+          $ref: "#/components/responses/BadGateway"
   /api/v4/users/login/cws:
     post:
       tags:

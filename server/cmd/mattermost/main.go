@@ -14,9 +14,12 @@ import (
 
 	// Enterprise Imports
 	_ "github.com/mattermost/mattermost/server/v8/enterprise"
+
+	godotenv "github.com/joho/godotenv"
 )
 
 func main() {
+	godotenv.Load()
 	if err := commands.Run(os.Args[1:]); err != nil {
 		os.Exit(1)
 	}

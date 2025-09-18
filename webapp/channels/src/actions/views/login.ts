@@ -17,8 +17,22 @@ export function login(loginId: string, password: string, mfaToken = ''): ActionF
         dispatch({type: UserTypes.LOGIN_REQUEST, data: null});
 
         try {
-            // This is partial user profile we recieved when we login. We still need to make getMe for complete user profile.
-            const loggedInUserProfile = await Client4.login(loginId, password, mfaToken);
+            let loggedInUserProfile;
+
+            // Thử đăng nhập qua Odoo trước; nếu server chưa hỗ trợ hoặc lỗi upstream (không phải 401), fallback sang login chuẩn
+            try {
+                await Client4.loginOdoo(loginId, password);
+
+                // Sau khi server thiết lập session, gọi /users/me để lấy hồ sơ đầy đủ
+                loggedInUserProfile = await Client4.getMe();
+            } catch (e) {
+                const err = e as ServerError;
+                if (err?.status_code && err.status_code !== 401) {
+                    loggedInUserProfile = await Client4.login(loginId, password, mfaToken);
+                } else {
+                    throw e;
+                }
+            }
 
             dispatch(
                 batchActions([
