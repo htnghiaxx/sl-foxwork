@@ -12,7 +12,6 @@ mattermost.mattermost-license
 config/mattermost.mattermost-license
 config/config.json
 config/*.crt
-.serena
 
 web/static/js/bundle*.js
 web/static/js/bundle*.js.map

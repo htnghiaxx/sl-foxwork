@@ -13,6 +13,7 @@ config/mattermost.mattermost-license
 config/config*.json
 config/*.crt
 config/*.key
+/tmp
 
 web/static/js/bundle*.js
 web/static/js/bundle*.js.map
