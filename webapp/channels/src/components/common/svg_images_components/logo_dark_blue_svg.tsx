@@ -1,8 +1,13 @@
 // Copyright (c) 2015-present Mattermost, Inc. All Rights Reserved.
 // See LICENSE.txt for license information.
 
+<<<<<<< HEAD
 import React from "react";
 import styled from "styled-components";
+=======
+import React from 'react';
+import styled from 'styled-components';
+>>>>>>> 1e24c0e2102b0f8eaae0d972d571e79b8a22086e
 
 type Props = {
     width?: number;
