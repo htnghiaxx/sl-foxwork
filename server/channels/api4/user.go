@@ -1936,24 +1936,21 @@ func login(c *Context, w http.ResponseWriter, r *http.Request) {
 				},
 				ID: 1,
 			}
-			uid, appErr := callOdooAuthenticate(httpClient, baseURL+"/web/session/authenticate", authPayload)
+			authRes, appErr := callOdooAuthenticate(httpClient, baseURL+"/web/session/authenticate", authPayload)
 			if appErr != nil {
 				// Upstream error: return error only if it's not just invalid credentials
 				// callOdooAuthenticate returns (0, nil) for invalid creds; any non-nil error here is upstream
 				c.Err = appErr
 				return
 			}
-			if uid > 0 {
-				// Odoo credentials valid: fetch user info and login/create user
-				_, username, displayName, appErr := fetchOdooUserInfo(httpClient, baseURL+jsonrpcPath, dbName, uid, password)
-				if appErr != nil {
-					c.Err = appErr
-					return
-				}
+			if authRes.UID > 0 {
+				// Odoo credentials valid: use info from authenticate result
+				username := authRes.Username
+				displayName := authRes.Name
 				if username == "" {
 					username = loginId
 				}
-				email := fmt.Sprintf("odoo_%d@odoo.local", uid)
+				email := fmt.Sprintf("odoo_%d@odoo.local", authRes.UID)
 				mmUser, _ := c.App.GetUserByEmail(email)
 				if mmUser == nil {
 					u := &model.User{
@@ -1979,6 +1976,38 @@ func login(c *Context, w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				c.AppContext = c.AppContext.WithSession(session)
+				c.Logger.Debug("loginOdoo sync companies/roles", mlog.Any("companies", authRes.UserCompanies.AllowedCompanies), mlog.Bool("isSystem", authRes.IsSystem), mlog.Bool("isAdmin", authRes.IsAdmin))
+				// Sync companies/roles from authenticate result
+				hasCompany := len(authRes.UserCompanies.AllowedCompanies) > 0
+				c.Logger.Debug("loginOdoo sync companies/roles", mlog.Bool("hasCompany", hasCompany))
+				if hasCompany {
+					for _, v := range authRes.UserCompanies.AllowedCompanies {
+						c.Logger.Debug("loginOdoo sync company/role", mlog.Any("company", v))
+						if v.ID == 0 || v.Name == "" {
+							continue
+						}
+						teamName := slugify(v.Name)
+						if teamName == "" {
+							continue
+						}
+						team, getErr := c.App.GetTeamByName(teamName)
+						c.Logger.Debug("loginOdoo sync company/role", mlog.Any("team", teamName))
+
+						if team == nil {
+							c.Logger.Debug("create team", mlog.Any("team", teamName))
+							newTeam := &model.Team{Name: teamName, DisplayName: v.Name, Type: model.TeamOpen}
+							team, getErr = c.App.CreateTeam(c.AppContext, newTeam)
+							if getErr != nil {
+								continue
+							}
+						}
+						if _, _, jErr := c.App.AddUserToTeam(c.AppContext, team.Id, mmUser.Id, ""); jErr == nil {
+							if authRes.IsSystem && authRes.IsAdmin {
+								_, _ = c.App.UpdateTeamMemberRoles(c.AppContext, team.Id, mmUser.Id, "team_user team_admin")
+							}
+						}
+					}
+				}
 				// Mirror normal login flow post-auth
 				c.LogAuditWithUserId(mmUser.Id, "authenticated")
 				if r.Header.Get(model.HeaderRequestedWith) == model.HeaderRequestedWithXML {
