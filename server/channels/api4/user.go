@@ -8,10 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-<<<<<<< HEAD
 	"os"
-=======
->>>>>>> 1e24c0e2102b0f8eaae0d972d571e79b8a22086e
 	"slices"
 	"strconv"
 	"strings"
@@ -1839,10 +1836,7 @@ func sendPasswordReset(c *Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func login(c *Context, w http.ResponseWriter, r *http.Request) {
-<<<<<<< HEAD
 	c.Logger.Debug("login")
-=======
->>>>>>> 1e24c0e2102b0f8eaae0d972d571e79b8a22086e
 	// Mask all sensitive errors, with the exception of the following
 	defer func() {
 		if c.Err == nil {
