@@ -46,14 +46,12 @@ RUN addgroup -g 2000 mattermost && \
     adduser -D -u 2000 -G mattermost mattermost
 
 # Tạo thư mục cần thiết
-RUN mkdir -p /mattermost/data /mattermost/logs /mattermost/config /mattermost/plugins /mattermost/client/plugins && \
+RUN mkdir -p /mattermost/data /mattermost/logs /mattermost/plugins /mattermost/client/plugins && \
     chown -R mattermost:mattermost /mattermost
 
 # Copy binary từ builder stage
 COPY --from=builder --chown=mattermost:mattermost /app/tmp/mattermost-dev /mattermost/bin/mattermost
 
-# Copy config files nếu có
-COPY --chown=mattermost:mattermost config/ /mattermost/config/
 
 # Copy i18n translation files
 COPY --chown=mattermost:mattermost i18n/ /mattermost/i18n/
