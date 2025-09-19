@@ -40,11 +40,15 @@ services:
     build:
       context: ./webapp
       dockerfile: Dockerfile.dev
+      args:
+        MM_SERVICESETTINGS_SITEURL: http://localhost:8065
     container_name: mattermost-webapp-dev
     ports:
       - "8080:80"
     volumes:
       - ./webapp/channels/dist:/usr/share/nginx/html
+    environment:
+      - MM_SERVICESETTINGS_SITEURL=http://localhost:8065
     depends_on:
       - mattermost-server
     networks:

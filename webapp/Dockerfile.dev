@@ -2,7 +2,7 @@
 # Dựa trên package.json và build scripts
 
 # Stage 1: Build stage
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Cài đặt dependencies cần thiết cho build
 RUN apk add --no-cache \
@@ -27,6 +27,11 @@ RUN npm ci --only=production
 
 # Copy source code
 COPY . .
+
+# Set build environment variables
+# MM_SERVICESETTINGS_SITEURL cần thiết cho webpack config để xác định publicPath
+ARG MM_SERVICESETTINGS_SITEURL=http://localhost:8065
+ENV MM_SERVICESETTINGS_SITEURL=${MM_SERVICESETTINGS_SITEURL}
 
 # Build webapp theo cấu hình package.json
 # Script: "build": "node scripts/build.mjs"
