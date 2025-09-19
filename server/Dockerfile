@@ -108,7 +108,7 @@ COPY --chown=mattermost:mattermost server/templates/ /mattermost/templates/
 COPY --chown=mattermost:mattermost server/fonts/ /mattermost/fonts/
 
 # Copy webapp built files vào thư mục client của server
-COPY --from=webapp-builder --chown=mattermost:mattermost /workspace/webapp/channels/dist/ /mattermost/client/
+COPY --from=webapp-builder --chown=mattermost:mattermost /app/channels/dist/ /mattermost/client/
 
 # Set working directory
 WORKDIR /mattermost
