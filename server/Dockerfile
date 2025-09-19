@@ -9,7 +9,14 @@ RUN apk add --no-cache \
     make \
     g++ \
     git \
-    bash
+    bash \
+    autoconf \
+    automake \
+    libtool \
+    pkgconf \
+    nasm \
+    build-base \
+    gifsicle
 
 # Lưu ý: Docker build context nên là root repo và dùng -f server/Dockerfile
 WORKDIR /workspace/webapp
