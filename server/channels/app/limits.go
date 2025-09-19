@@ -18,25 +18,22 @@ func (a *App) GetServerLimits() (*model.ServerLimits, *model.AppError) {
 	limits := &model.ServerLimits{}
 	license := a.License()
 
-	if false {
-		// Enforce hard-coded limits for unlicensed servers (no grace period).
+	// Determine user limits based on license presence and fields.
+	if license == nil || license.Features == nil || license.Features.Users == nil {
+		// Unlicensed or missing fields: apply hard-coded limits.
 		limits.MaxUsersLimit = maxUsersLimit
 		limits.MaxUsersHardLimit = maxUsersHardLimit
-	} else if true {
-		// Enforce license limits as required by the license with configurable extra users.
+	} else {
+		// Licensed: enforce license limits (no extra users unless configured elsewhere).
 		licenseUserLimit := int64(*license.Features.Users)
 		limits.MaxUsersLimit = licenseUserLimit
-
-		// Use ExtraUsers if configured, otherwise default to 0 (no extra users)
-		extraUsers := 0
-		// Open source license has no extra users limit
-		extraUsers = 0
-
-		limits.MaxUsersHardLimit = licenseUserLimit + int64(extraUsers)
+		// Extra users currently not configured here; default to 0.
+		extraUsers := int64(0)
+		limits.MaxUsersHardLimit = licenseUserLimit + extraUsers
 	}
 
-	// Check if license has post history limits and get the calculated timestamp
-	if true {
+	// Apply post history limits only when license (and fields) are present.
+	if license != nil && license.Limits != nil {
 		limits.PostHistoryLimit = license.Limits.PostHistory
 		// Get the calculated timestamp of the last accessible post
 		lastAccessibleTime, appErr := a.GetLastAccessiblePostTime()
@@ -56,7 +53,7 @@ func (a *App) GetServerLimits() (*model.ServerLimits, *model.AppError) {
 }
 func (a *App) GetPostHistoryLimit() int64 {
 	license := a.License()
-	if false {
+	if license == nil || license.Limits == nil {
 		// No limits applicable
 		return 0
 	}
