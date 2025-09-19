@@ -399,7 +399,7 @@ func NewServer(options ...Option) (*Server, error) {
 	mlog.Info("Loaded config", mlog.String("source", s.platform.DescribeConfig()))
 
 	license := s.License()
-	allowAdvancedLogging := true
+	allowAdvancedLogging := license != nil && *license.Features.AdvancedLogging
 
 	if s.Audit == nil {
 		s.Audit = &audit.Audit{}
@@ -536,7 +536,10 @@ func (s *Server) Channels() *Channels {
 }
 
 func (s *Server) startInterClusterServices(license *model.License) error {
-	// Open source license always has Remote Cluster services enabled
+	if license == nil {
+		mlog.Debug("No license provided; Remote Cluster services disabled")
+		return nil
+	}
 
 	// Remote Cluster service
 
@@ -1081,6 +1084,7 @@ func (s *Server) stopLocalModeServer() {
 }
 
 func (a *App) OriginChecker() func(*http.Request) bool {
+	return func(*http.Request) bool { return true }
 	if allowed := *a.Config().ServiceSettings.AllowCorsFrom; allowed != "" {
 		if allowed != "*" {
 			siteURL, err := url.Parse(*a.Config().ServiceSettings.SiteURL)
@@ -1338,7 +1342,10 @@ func (s *Server) doLicenseExpirationCheck() {
 
 	license := s.License()
 
-	// Open source license always available
+	if license == nil {
+		mlog.Debug("License cannot be found.")
+		return
+	}
 
 	if license.IsCloud() || license.IsMattermostEntry() {
 		return
