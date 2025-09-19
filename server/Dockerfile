@@ -39,7 +39,7 @@ COPY webapp/platform/ ./platform/
 RUN npm install
 
 # Copy source code
-COPY webapp/ .
+COPY webapp/ ./
 
 # Sau khi có đầy đủ mã nguồn, chạy rebuild native modules và postinstall (patch-package + build workspaces)
 RUN npm run build
