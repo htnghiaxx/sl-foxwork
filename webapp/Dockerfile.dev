@@ -12,7 +12,9 @@ RUN apk add --no-cache \
     gcc \
     libc-dev \
     libpng-dev \
-    nasm
+    nasm \
+    git \
+    patch
 
 # Tạo thư mục làm việc
 WORKDIR /app
@@ -22,8 +24,8 @@ COPY package*.json ./
 COPY channels/package*.json ./channels/
 COPY platform/*/package*.json ./platform/*/
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies (bao gồm devDependencies để chạy patch-package)
+RUN npm ci
 
 # Copy source code
 COPY . .
