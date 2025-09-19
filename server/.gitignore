@@ -24,8 +24,8 @@ config/logging.json
 /plugins
 
 # go.work file
-go.work
-go.work.sum
+# go.work
+# go.work.sum
 
 #license files
 *.license
