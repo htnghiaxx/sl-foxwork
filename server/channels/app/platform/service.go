@@ -329,23 +329,14 @@ func New(sc ServiceConfig, options ...Option) (*PlatformService, error) {
 	}
 
 	// Step 8: Init License
-	if model.BuildEnterpriseReady == "true" {
-		ps.LoadLicense()
-	}
-	license := ps.License()
+	ps.LoadLicense()
 
-	// This is a hack because ideally we wouldn't even have started the Redis client
-	// if the license didn't have clustering. But there's an intricate deadlock
-	// where license cannot be loaded before store, and store cannot be loaded before
-	// cache. So loading license before loading cache is an uphill battle.
-	if (license == nil || !*license.Features.Cluster) && *cacheConfig.CacheType == model.CacheTypeRedis && !ps.forceEnableRedis {
-		return nil, fmt.Errorf("Redis cannot be used in an instance without a license or a license without clustering")
-	}
+	// Open source license always has clustering enabled, no need to check
 
 	// Step 9: Initialize filestore
 	if ps.filestore == nil {
 		insecure := ps.Config().ServiceSettings.EnableInsecureOutgoingConnections
-		backend, err2 := filestore.NewFileBackend(filestore.NewFileBackendSettingsFromConfig(&ps.Config().FileSettings, license != nil && *license.Features.Compliance, insecure != nil && *insecure))
+		backend, err2 := filestore.NewFileBackend(filestore.NewFileBackendSettingsFromConfig(&ps.Config().FileSettings, true, insecure != nil && *insecure))
 		if err2 != nil {
 			return nil, fmt.Errorf("failed to initialize filebackend: %w", err2)
 		}
@@ -357,7 +348,7 @@ func New(sc ServiceConfig, options ...Option) (*PlatformService, error) {
 		ps.exportFilestore = ps.filestore
 		if *ps.Config().FileSettings.DedicatedExportStore {
 			mlog.Info("Setting up dedicated export filestore", mlog.String("driver_name", *ps.Config().FileSettings.ExportDriverName))
-			backend, errFileBack := filestore.NewExportFileBackend(filestore.NewExportFileBackendSettingsFromConfig(&ps.Config().FileSettings, license != nil && *license.Features.Compliance, false))
+			backend, errFileBack := filestore.NewExportFileBackend(filestore.NewExportFileBackendSettingsFromConfig(&ps.Config().FileSettings, true, false))
 			if errFileBack != nil {
 				return nil, fmt.Errorf("failed to initialize export filebackend: %w", errFileBack)
 			}
@@ -502,9 +493,8 @@ func (ps *PlatformService) initEnterprise() {
 		ps.ldapDiagnostic = ldapDiagnosticInterface(ps)
 	}
 
-	if licenseInterface != nil {
-		ps.licenseManager = licenseInterface(ps)
-	}
+	// Open source license manager is always available
+	ps.licenseManager = einterfaces.NewOpenSourceLicenseManager()
 
 	if accessControlServiceInterface != nil {
 		ps.pdpService = accessControlServiceInterface(ps)

@@ -94,7 +94,7 @@ func GenerateClientConfig(c *model.Config, telemetryID string, license *model.Li
 
 	props["EnableEmailInvitations"] = strconv.FormatBool(*c.ServiceSettings.EnableEmailInvitations)
 
-	props["CWSURL"] = *c.CloudSettings.CWSURL
+	// CloudSettings removed - no cloud connections
 	props["CWSMock"] = model.MockCWS
 
 	props["DisableRefetchingOnBrowserFocus"] = strconv.FormatBool(*c.ExperimentalSettings.DisableRefetchingOnBrowserFocus)
@@ -165,83 +165,74 @@ func GenerateClientConfig(c *model.Config, telemetryID string, license *model.Li
 	props["WranglerMoveThreadFromDirectMessageChannelEnable"] = strconv.FormatBool(*c.WranglerSettings.MoveThreadFromDirectMessageChannelEnable)
 	props["WranglerMoveThreadFromGroupMessageChannelEnable"] = strconv.FormatBool(*c.WranglerSettings.MoveThreadFromGroupMessageChannelEnable)
 
-	if license != nil {
-		props["ExperimentalEnableAuthenticationTransfer"] = strconv.FormatBool(*c.ServiceSettings.ExperimentalEnableAuthenticationTransfer)
+	props["ExperimentalEnableAuthenticationTransfer"] = strconv.FormatBool(*c.ServiceSettings.ExperimentalEnableAuthenticationTransfer)
 
-		if *license.Features.LDAP {
-			props["LdapNicknameAttributeSet"] = strconv.FormatBool(*c.LdapSettings.NicknameAttribute != "")
-			props["LdapFirstNameAttributeSet"] = strconv.FormatBool(*c.LdapSettings.FirstNameAttribute != "")
-			props["LdapLastNameAttributeSet"] = strconv.FormatBool(*c.LdapSettings.LastNameAttribute != "")
-			props["LdapPictureAttributeSet"] = strconv.FormatBool(*c.LdapSettings.PictureAttribute != "")
-			props["LdapPositionAttributeSet"] = strconv.FormatBool(*c.LdapSettings.PositionAttribute != "")
-		}
+	// Open source license always has LDAP enabled
 
-		if *license.Features.Compliance {
-			props["EnableCompliance"] = strconv.FormatBool(*c.ComplianceSettings.Enable)
-			props["EnableMobileFileDownload"] = strconv.FormatBool(*c.FileSettings.EnableMobileDownload)
-			props["EnableMobileFileUpload"] = strconv.FormatBool(*c.FileSettings.EnableMobileUpload)
-		}
+	props["LdapNicknameAttributeSet"] = strconv.FormatBool(*c.LdapSettings.NicknameAttribute != "")
+	props["LdapFirstNameAttributeSet"] = strconv.FormatBool(*c.LdapSettings.FirstNameAttribute != "")
+	props["LdapLastNameAttributeSet"] = strconv.FormatBool(*c.LdapSettings.LastNameAttribute != "")
+	props["LdapPictureAttributeSet"] = strconv.FormatBool(*c.LdapSettings.PictureAttribute != "")
+	props["LdapPositionAttributeSet"] = strconv.FormatBool(*c.LdapSettings.PositionAttribute != "")
 
-		if *license.Features.SAML {
-			props["SamlFirstNameAttributeSet"] = strconv.FormatBool(*c.SamlSettings.FirstNameAttribute != "")
-			props["SamlLastNameAttributeSet"] = strconv.FormatBool(*c.SamlSettings.LastNameAttribute != "")
-			props["SamlNicknameAttributeSet"] = strconv.FormatBool(*c.SamlSettings.NicknameAttribute != "")
-			props["SamlPositionAttributeSet"] = strconv.FormatBool(*c.SamlSettings.PositionAttribute != "")
-		}
+	// Open source license always has Compliance enabled
 
-		if *license.Features.Cluster {
-			props["EnableCluster"] = strconv.FormatBool(*c.ClusterSettings.Enable)
-		}
+	props["EnableCompliance"] = strconv.FormatBool(*c.ComplianceSettings.Enable)
+	props["EnableMobileFileDownload"] = strconv.FormatBool(*c.FileSettings.EnableMobileDownload)
+	props["EnableMobileFileUpload"] = strconv.FormatBool(*c.FileSettings.EnableMobileUpload)
 
-		if *license.Features.Cluster {
-			props["EnableMetrics"] = strconv.FormatBool(*c.MetricsSettings.Enable)
-			props["EnableClientMetrics"] = strconv.FormatBool(*c.MetricsSettings.Enable && *c.MetricsSettings.EnableClientMetrics)
-			props["EnableNotificationMetrics"] = strconv.FormatBool(c.FeatureFlags.NotificationMonitoring && *c.MetricsSettings.EnableNotificationMetrics)
-		}
+	// Open source license always has SAML enabled
 
-		if *license.Features.Announcement {
-			props["EnableBanner"] = strconv.FormatBool(*c.AnnouncementSettings.EnableBanner)
-			props["BannerText"] = *c.AnnouncementSettings.BannerText
-			props["BannerColor"] = *c.AnnouncementSettings.BannerColor
-			props["BannerTextColor"] = *c.AnnouncementSettings.BannerTextColor
-			props["AllowBannerDismissal"] = strconv.FormatBool(*c.AnnouncementSettings.AllowBannerDismissal)
-		}
+	props["SamlFirstNameAttributeSet"] = strconv.FormatBool(*c.SamlSettings.FirstNameAttribute != "")
+	props["SamlLastNameAttributeSet"] = strconv.FormatBool(*c.SamlSettings.LastNameAttribute != "")
+	props["SamlNicknameAttributeSet"] = strconv.FormatBool(*c.SamlSettings.NicknameAttribute != "")
+	props["SamlPositionAttributeSet"] = strconv.FormatBool(*c.SamlSettings.PositionAttribute != "")
 
-		if *license.Features.ThemeManagement {
-			props["EnableThemeSelection"] = strconv.FormatBool(*c.ThemeSettings.EnableThemeSelection)
-			props["DefaultTheme"] = *c.ThemeSettings.DefaultTheme
-			props["AllowCustomThemes"] = strconv.FormatBool(*c.ThemeSettings.AllowCustomThemes)
-			props["AllowedThemes"] = strings.Join(c.ThemeSettings.AllowedThemes, ",")
-		}
+	props["EnableCluster"] = strconv.FormatBool(*c.ClusterSettings.Enable)
+	props["EnableMetrics"] = strconv.FormatBool(*c.MetricsSettings.Enable)
+	props["EnableClientMetrics"] = strconv.FormatBool(*c.MetricsSettings.Enable && *c.MetricsSettings.EnableClientMetrics)
+	props["EnableNotificationMetrics"] = strconv.FormatBool(c.FeatureFlags.NotificationMonitoring && *c.MetricsSettings.EnableNotificationMetrics)
 
-		if *license.Features.DataRetention {
-			props["DataRetentionEnableMessageDeletion"] = strconv.FormatBool(*c.DataRetentionSettings.EnableMessageDeletion)
-			props["DataRetentionMessageRetentionHours"] = strconv.FormatInt(int64(c.DataRetentionSettings.GetMessageRetentionHours()), 10)
-			props["DataRetentionEnableFileDeletion"] = strconv.FormatBool(*c.DataRetentionSettings.EnableFileDeletion)
-			props["DataRetentionFileRetentionHours"] = strconv.FormatInt(int64(c.DataRetentionSettings.GetFileRetentionHours()), 10)
-		}
+	props["EnableBanner"] = strconv.FormatBool(*c.AnnouncementSettings.EnableBanner)
+	props["BannerText"] = *c.AnnouncementSettings.BannerText
+	props["BannerColor"] = *c.AnnouncementSettings.BannerColor
+	props["BannerTextColor"] = *c.AnnouncementSettings.BannerTextColor
+	props["AllowBannerDismissal"] = strconv.FormatBool(*c.AnnouncementSettings.AllowBannerDismissal)
 
-		if license.HasSharedChannels() {
-			props["ExperimentalSharedChannels"] = strconv.FormatBool(*c.ConnectedWorkspacesSettings.EnableSharedChannels)
-			props["ExperimentalRemoteClusterService"] = strconv.FormatBool(c.FeatureFlags.EnableRemoteClusterService && *c.ConnectedWorkspacesSettings.EnableRemoteClusterService)
-		}
+	// Open source license always has ThemeManagement enabled
 
-		if model.MinimumProfessionalLicense(license) {
-			props["EnableCustomGroups"] = strconv.FormatBool(*c.ServiceSettings.EnableCustomGroups)
-			props["PostAcknowledgements"] = "true"
-			props["ScheduledPosts"] = strconv.FormatBool(*c.ServiceSettings.ScheduledPosts)
-		}
+	props["EnableThemeSelection"] = strconv.FormatBool(*c.ThemeSettings.EnableThemeSelection)
+	props["DefaultTheme"] = *c.ThemeSettings.DefaultTheme
+	props["AllowCustomThemes"] = strconv.FormatBool(*c.ThemeSettings.AllowCustomThemes)
+	props["AllowedThemes"] = strings.Join(c.ThemeSettings.AllowedThemes, ",")
 
-		if model.MinimumEnterpriseLicense(license) {
-			props["MobileEnableBiometrics"] = strconv.FormatBool(*c.NativeAppSettings.MobileEnableBiometrics)
-			props["MobilePreventScreenCapture"] = strconv.FormatBool(*c.NativeAppSettings.MobilePreventScreenCapture)
-			props["MobileJailbreakProtection"] = strconv.FormatBool(*c.NativeAppSettings.MobileJailbreakProtection)
-		}
+	// Open source license always has DataRetention enabled
 
-		if model.MinimumEnterpriseAdvancedLicense(license) {
-			props["ContentFlaggingEnabled"] = strconv.FormatBool(c.FeatureFlags.ContentFlagging && *c.ContentFlaggingSettings.EnableContentFlagging)
-		}
-	}
+	props["DataRetentionEnableMessageDeletion"] = strconv.FormatBool(*c.DataRetentionSettings.EnableMessageDeletion)
+	props["DataRetentionMessageRetentionHours"] = strconv.FormatInt(int64(c.DataRetentionSettings.GetMessageRetentionHours()), 10)
+	props["DataRetentionEnableFileDeletion"] = strconv.FormatBool(*c.DataRetentionSettings.EnableFileDeletion)
+	props["DataRetentionFileRetentionHours"] = strconv.FormatInt(int64(c.DataRetentionSettings.GetFileRetentionHours()), 10)
+
+	// Open source license always has SharedChannels enabled
+
+	props["ExperimentalSharedChannels"] = strconv.FormatBool(*c.ConnectedWorkspacesSettings.EnableSharedChannels)
+	props["ExperimentalRemoteClusterService"] = strconv.FormatBool(c.FeatureFlags.EnableRemoteClusterService && *c.ConnectedWorkspacesSettings.EnableRemoteClusterService)
+
+	// Open source license always has Professional features
+
+	props["EnableCustomGroups"] = strconv.FormatBool(*c.ServiceSettings.EnableCustomGroups)
+	props["PostAcknowledgements"] = "true"
+	props["ScheduledPosts"] = strconv.FormatBool(*c.ServiceSettings.ScheduledPosts)
+
+	// Open source license always has Enterprise features
+
+	props["MobileEnableBiometrics"] = strconv.FormatBool(*c.NativeAppSettings.MobileEnableBiometrics)
+	props["MobilePreventScreenCapture"] = strconv.FormatBool(*c.NativeAppSettings.MobilePreventScreenCapture)
+	props["MobileJailbreakProtection"] = strconv.FormatBool(*c.NativeAppSettings.MobileJailbreakProtection)
+
+	// Open source license always has Enterprise Advanced features
+
+	props["ContentFlaggingEnabled"] = strconv.FormatBool(c.FeatureFlags.ContentFlagging && *c.ContentFlaggingSettings.EnableContentFlagging)
 
 	return props
 }
@@ -356,65 +347,58 @@ func GenerateLimitedClientConfig(c *model.Config, telemetryID string, license *m
 	props["HideGuestTags"] = strconv.FormatBool(*c.GuestAccountsSettings.HideTags)
 	props["GuestAccountsEnforceMultifactorAuthentication"] = strconv.FormatBool(*c.GuestAccountsSettings.EnforceMultifactorAuthentication)
 
-	if license != nil {
-		if *license.Features.LDAP {
-			props["EnableLdap"] = strconv.FormatBool(*c.LdapSettings.Enable)
-			props["LdapLoginFieldName"] = *c.LdapSettings.LoginFieldName
-			props["LdapLoginButtonColor"] = *c.LdapSettings.LoginButtonColor
-			props["LdapLoginButtonBorderColor"] = *c.LdapSettings.LoginButtonBorderColor
-			props["LdapLoginButtonTextColor"] = *c.LdapSettings.LoginButtonTextColor
-		}
+	// Open source license always has LDAP and SAML enabled
+	{
+		props["EnableLdap"] = strconv.FormatBool(*c.LdapSettings.Enable)
+		props["LdapLoginFieldName"] = *c.LdapSettings.LoginFieldName
+		props["LdapLoginButtonColor"] = *c.LdapSettings.LoginButtonColor
+		props["LdapLoginButtonBorderColor"] = *c.LdapSettings.LoginButtonBorderColor
+		props["LdapLoginButtonTextColor"] = *c.LdapSettings.LoginButtonTextColor
+	}
 
-		if *license.Features.SAML {
-			props["EnableSaml"] = strconv.FormatBool(*c.SamlSettings.Enable)
-			props["SamlLoginButtonText"] = *c.SamlSettings.LoginButtonText
-			props["SamlLoginButtonColor"] = *c.SamlSettings.LoginButtonColor
-			props["SamlLoginButtonBorderColor"] = *c.SamlSettings.LoginButtonBorderColor
-			props["SamlLoginButtonTextColor"] = *c.SamlSettings.LoginButtonTextColor
-		}
+	if true {
+		props["EnableSaml"] = strconv.FormatBool(*c.SamlSettings.Enable)
+		props["SamlLoginButtonText"] = *c.SamlSettings.LoginButtonText
+		props["SamlLoginButtonColor"] = *c.SamlSettings.LoginButtonColor
+		props["SamlLoginButtonBorderColor"] = *c.SamlSettings.LoginButtonBorderColor
+		props["SamlLoginButtonTextColor"] = *c.SamlSettings.LoginButtonTextColor
+	}
 
-		if *license.Features.CustomTermsOfService {
-			props["EnableCustomTermsOfService"] = strconv.FormatBool(*c.SupportSettings.CustomTermsOfServiceEnabled)
-			props["CustomTermsOfServiceReAcceptancePeriod"] = strconv.FormatInt(int64(*c.SupportSettings.CustomTermsOfServiceReAcceptancePeriod), 10)
-		}
+	// Open source license always has CustomTermsOfService enabled
+	props["EnableCustomTermsOfService"] = strconv.FormatBool(*c.SupportSettings.CustomTermsOfServiceEnabled)
+	props["CustomTermsOfServiceReAcceptancePeriod"] = strconv.FormatInt(int64(*c.SupportSettings.CustomTermsOfServiceReAcceptancePeriod), 10)
 
-		if *license.Features.MFA {
-			props["EnforceMultifactorAuthentication"] = strconv.FormatBool(*c.ServiceSettings.EnforceMultifactorAuthentication)
-		}
+	// Open source license always has MFA enabled
+	props["EnforceMultifactorAuthentication"] = strconv.FormatBool(*c.ServiceSettings.EnforceMultifactorAuthentication)
 
-		if license.IsCloud() {
-			// MM-48727: enable SSO options for free cloud - not in self hosted
-			*license.Features.GoogleOAuth = true
-			*license.Features.Office365OAuth = true
-		}
+	// Open source license is not cloud
+	// MM-48727: enable SSO options for free cloud - not in self hosted
 
-		if *license.Features.GoogleOAuth {
-			props["EnableSignUpWithGoogle"] = strconv.FormatBool(*c.GoogleSettings.Enable)
-		}
+	// Open source license always has GoogleOAuth enabled
+	props["EnableSignUpWithGoogle"] = strconv.FormatBool(*c.GoogleSettings.Enable)
 
-		if *license.Features.Office365OAuth {
-			props["EnableSignUpWithOffice365"] = strconv.FormatBool(*c.Office365Settings.Enable)
-		}
+	// Open source license always has Office365OAuth enabled
+	props["EnableSignUpWithOffice365"] = strconv.FormatBool(*c.Office365Settings.Enable)
 
-		if *license.Features.OpenId {
-			props["EnableSignUpWithOpenId"] = strconv.FormatBool(*c.OpenIdSettings.Enable)
-			props["OpenIdButtonColor"] = *c.OpenIdSettings.ButtonColor
-			props["OpenIdButtonText"] = *c.OpenIdSettings.ButtonText
-			props["EnableSignUpWithGitLab"] = strconv.FormatBool(*c.GitLabSettings.Enable)
-			props["GitLabButtonColor"] = *c.GitLabSettings.ButtonColor
-			props["GitLabButtonText"] = *c.GitLabSettings.ButtonText
-		}
+	// Open source license always has OpenId enabled
+	props["EnableSignUpWithOpenId"] = strconv.FormatBool(*c.OpenIdSettings.Enable)
+	props["OpenIdButtonColor"] = *c.OpenIdSettings.ButtonColor
+	props["OpenIdButtonText"] = *c.OpenIdSettings.ButtonText
+	props["EnableSignUpWithGitLab"] = strconv.FormatBool(*c.GitLabSettings.Enable)
+	props["GitLabButtonColor"] = *c.GitLabSettings.ButtonColor
+	props["GitLabButtonText"] = *c.GitLabSettings.ButtonText
 
-		if model.MinimumEnterpriseLicense(license) {
-			props["MobileEnableBiometrics"] = strconv.FormatBool(*c.NativeAppSettings.MobileEnableBiometrics)
-			props["MobilePreventScreenCapture"] = strconv.FormatBool(*c.NativeAppSettings.MobilePreventScreenCapture)
-			props["MobileJailbreakProtection"] = strconv.FormatBool(*c.NativeAppSettings.MobileJailbreakProtection)
-		}
+	// Open source license always has Enterprise features
+	if true {
+		props["MobileEnableBiometrics"] = strconv.FormatBool(*c.NativeAppSettings.MobileEnableBiometrics)
+		props["MobilePreventScreenCapture"] = strconv.FormatBool(*c.NativeAppSettings.MobilePreventScreenCapture)
+		props["MobileJailbreakProtection"] = strconv.FormatBool(*c.NativeAppSettings.MobileJailbreakProtection)
+	}
 
-		if model.MinimumEnterpriseAdvancedLicense(license) {
-			props["MobileEnableSecureFilePreview"] = strconv.FormatBool(*c.NativeAppSettings.MobileEnableSecureFilePreview)
-			props["MobileAllowPdfLinkNavigation"] = strconv.FormatBool(*c.NativeAppSettings.MobileAllowPdfLinkNavigation)
-		}
+	// Open source license always has Enterprise Advanced features
+	if true {
+		props["MobileEnableSecureFilePreview"] = strconv.FormatBool(*c.NativeAppSettings.MobileEnableSecureFilePreview)
+		props["MobileAllowPdfLinkNavigation"] = strconv.FormatBool(*c.NativeAppSettings.MobileAllowPdfLinkNavigation)
 	}
 
 	for key, value := range c.FeatureFlags.ToMap() {

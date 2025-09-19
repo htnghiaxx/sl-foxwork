@@ -1,0 +1,68 @@
+# Dockerfile cho Mattermost Server Development
+# Dựa trên cấu hình air.toml
+
+# Stage 1: Build stage
+FROM golang:1.21-alpine AS builder
+
+# Cài đặt các dependencies cần thiết
+RUN apk add --no-cache \
+    git \
+    make \
+    gcc \
+    musl-dev \
+    ca-certificates
+
+# Tạo thư mục làm việc
+WORKDIR /app
+
+# Copy go.mod và go.sum trước để cache dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build Mattermost server binary theo cấu hình air.toml
+# cmd = "go build -o ./tmp/mattermost-dev ./cmd/mattermost"
+RUN mkdir -p tmp && \
+    go build -o ./tmp/mattermost-dev ./cmd/mattermost
+
+# Stage 2: Runtime stage
+FROM alpine:3.18
+
+# Cài đặt runtime dependencies
+RUN apk add --no-cache \
+    ca-certificates \
+    tzdata \
+    curl
+
+# Tạo user mattermost
+RUN addgroup -g 2000 mattermost && \
+    adduser -D -u 2000 -G mattermost mattermost
+
+# Tạo thư mục cần thiết
+RUN mkdir -p /mattermost/data /mattermost/logs /mattermost/config /mattermost/plugins /mattermost/client/plugins && \
+    chown -R mattermost:mattermost /mattermost
+
+# Copy binary từ builder stage
+COPY --from=builder --chown=mattermost:mattermost /app/tmp/mattermost-dev /mattermost/bin/mattermost
+
+# Copy config files nếu có
+COPY --chown=mattermost:mattermost config/ /mattermost/config/
+
+# Set working directory
+WORKDIR /mattermost
+
+# Switch to mattermost user
+USER mattermost
+
+# Expose ports
+EXPOSE 8065 8067 8074 8075
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8065/api/v4/system/ping || exit 1
+
+# Default command với args từ air.toml
+# args_bin = ["--config", "config/config.json"]
+CMD ["/mattermost/bin/mattermost", "--config", "config/config.json"]

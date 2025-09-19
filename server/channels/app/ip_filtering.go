@@ -33,7 +33,7 @@ func (a *App) SendIPFiltersChangedEmail(rctx request.CTX, userID string) error {
 	}
 
 	for _, user := range users {
-		if err = a.Srv().EmailService.SendIPFiltersChangedEmail(user.Email, initiatingUser[0], *a.Config().ServiceSettings.SiteURL, *a.Config().CloudSettings.CWSURL, user.Locale, cloudWorkspaceOwnerEmailAddress == user.Email); err != nil {
+		if err = a.Srv().EmailService.SendIPFiltersChangedEmail(user.Email, initiatingUser[0], *a.Config().ServiceSettings.SiteURL, "", user.Locale, cloudWorkspaceOwnerEmailAddress == user.Email); err != nil {
 			rctx.Logger().Error("Error while sending IP filters changed email", mlog.Err(err))
 		}
 	}

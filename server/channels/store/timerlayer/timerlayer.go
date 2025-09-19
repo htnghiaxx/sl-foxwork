@@ -36,7 +36,6 @@ type TimerLayer struct {
 	FileInfoStore                   store.FileInfoStore
 	GroupStore                      store.GroupStore
 	JobStore                        store.JobStore
-	LicenseStore                    store.LicenseStore
 	LinkMetadataStore               store.LinkMetadataStore
 	NotifyAdminStore                store.NotifyAdminStore
 	OAuthStore                      store.OAuthStore
@@ -138,10 +137,6 @@ func (s *TimerLayer) Group() store.GroupStore {
 
 func (s *TimerLayer) Job() store.JobStore {
 	return s.JobStore
-}
-
-func (s *TimerLayer) License() store.LicenseStore {
-	return s.LicenseStore
 }
 
 func (s *TimerLayer) LinkMetadata() store.LinkMetadataStore {
@@ -358,11 +353,6 @@ type TimerLayerGroupStore struct {
 
 type TimerLayerJobStore struct {
 	store.JobStore
-	Root *TimerLayer
-}
-
-type TimerLayerLicenseStore struct {
-	store.LicenseStore
 	Root *TimerLayer
 }
 
@@ -5301,54 +5291,6 @@ func (s *TimerLayerJobStore) UpdateStatusOptimistically(id string, currentStatus
 		s.Root.Metrics.ObserveStoreMethodDuration("JobStore.UpdateStatusOptimistically", success, elapsed)
 	}
 	return result, err
-}
-
-func (s *TimerLayerLicenseStore) Get(rctx request.CTX, id string) (*model.LicenseRecord, error) {
-	start := time.Now()
-
-	result, err := s.LicenseStore.Get(rctx, id)
-
-	elapsed := float64(time.Since(start)) / float64(time.Second)
-	if s.Root.Metrics != nil {
-		success := "false"
-		if err == nil {
-			success = "true"
-		}
-		s.Root.Metrics.ObserveStoreMethodDuration("LicenseStore.Get", success, elapsed)
-	}
-	return result, err
-}
-
-func (s *TimerLayerLicenseStore) GetAll() ([]*model.LicenseRecord, error) {
-	start := time.Now()
-
-	result, err := s.LicenseStore.GetAll()
-
-	elapsed := float64(time.Since(start)) / float64(time.Second)
-	if s.Root.Metrics != nil {
-		success := "false"
-		if err == nil {
-			success = "true"
-		}
-		s.Root.Metrics.ObserveStoreMethodDuration("LicenseStore.GetAll", success, elapsed)
-	}
-	return result, err
-}
-
-func (s *TimerLayerLicenseStore) Save(license *model.LicenseRecord) error {
-	start := time.Now()
-
-	err := s.LicenseStore.Save(license)
-
-	elapsed := float64(time.Since(start)) / float64(time.Second)
-	if s.Root.Metrics != nil {
-		success := "false"
-		if err == nil {
-			success = "true"
-		}
-		s.Root.Metrics.ObserveStoreMethodDuration("LicenseStore.Save", success, elapsed)
-	}
-	return err
 }
 
 func (s *TimerLayerLinkMetadataStore) Get(url string, timestamp int64) (*model.LinkMetadata, error) {
@@ -13303,7 +13245,6 @@ func New(childStore store.Store, metrics einterfaces.MetricsInterface) *TimerLay
 	newStore.FileInfoStore = &TimerLayerFileInfoStore{FileInfoStore: childStore.FileInfo(), Root: &newStore}
 	newStore.GroupStore = &TimerLayerGroupStore{GroupStore: childStore.Group(), Root: &newStore}
 	newStore.JobStore = &TimerLayerJobStore{JobStore: childStore.Job(), Root: &newStore}
-	newStore.LicenseStore = &TimerLayerLicenseStore{LicenseStore: childStore.License(), Root: &newStore}
 	newStore.LinkMetadataStore = &TimerLayerLinkMetadataStore{LinkMetadataStore: childStore.LinkMetadata(), Root: &newStore}
 	newStore.NotifyAdminStore = &TimerLayerNotifyAdminStore{NotifyAdminStore: childStore.NotifyAdmin(), Root: &newStore}
 	newStore.OAuthStore = &TimerLayerOAuthStore{OAuthStore: childStore.OAuth(), Root: &newStore}

@@ -21,7 +21,7 @@ type AppIface interface {
 
 func MakeUpgradeNotifyWorker(jobServer *jobs.JobServer, license *model.License, app AppIface) *jobs.SimpleWorker {
 	isEnabled := func(_ *model.Config) bool {
-		return license != nil && license.Features != nil && *license.Features.Cloud
+		return true
 	}
 	execute := func(logger mlog.LoggerIFace, job *model.Job) error {
 		defer jobServer.HandleJobPanic(logger, job)
@@ -39,7 +39,7 @@ func MakeUpgradeNotifyWorker(jobServer *jobs.JobServer, license *model.License, 
 
 func MakeTrialNotifyWorker(jobServer *jobs.JobServer, license *model.License, app AppIface) *jobs.SimpleWorker {
 	isEnabled := func(_ *model.Config) bool {
-		return license != nil && license.Features != nil && *license.Features.Cloud
+		return true
 	}
 	execute := func(logger mlog.LoggerIFace, job *model.Job) error {
 		defer jobServer.HandleJobPanic(logger, job)

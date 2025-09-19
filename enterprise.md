@@ -1,84 +1,261 @@
-## Enterprise License Audit & Plan
+# Kế hoạch loại bỏ hạn chế Enterprise về Clustering
 
-### Mục tiêu
-- Tổng hợp các điểm kiểm tra license ở frontend/backend.
-- Chuẩn hoá logic phân quyền theo license (Free/Cloud/Starter/Professional/Enterprise/Enterprise Advanced/Entry).
-- Đề xuất kế hoạch chuẩn hoá, test, và tài liệu hoá.
+## Tổng quan
 
-### Nguồn dữ liệu license
-- Backend trả về client license qua endpoint: `GET /api/v4/license/client?format=old` (file `server/channels/api4/license.go`).
-- Server giữ `License` tại: `platform.PlatformService.licenseValue` với các API:
-  - `Server.License()` → `PlatformService.License()` (file `server/channels/app/license.go`, `server/channels/app/platform/license.go`).
-  - Load/Set/Validate/Save license: `LoadLicense/SetLicense/ValidateAndSetLicenseBytes/SaveLicense`.
-- Mô hình dữ liệu server: `server/public/model/license.go` (`License`, `Features`, các helper như `IsCloud`, `IsTrialLicense`, `MinimumEnterpriseLicense`, ...).
+Tài liệu này mô tả kế hoạch chi tiết để loại bỏ các hạn chế Enterprise liên quan đến clustering trong Mattermost, cho phép tất cả người dùng sử dụng tính năng clustering mà không cần license Enterprise.
 
-### Frontend: nơi đọc/kiểm tra license
-- Selector trung tâm: `getLicense(state)` trong `webapp/channels/src/packages/mattermost-redux/src/selectors/entities/general.ts`.
-- Các tiện ích/logic:
-  - `webapp/channels/src/utils/license_utils.ts`:
-    - `isCloudLicense`, `isEnterpriseLicense`, `isEnterpriseOrCloudOrSKUStarterFree`, `isMinimumProfessionalLicense`, `isMinimumEnterpriseLicense`, `isMinimumEnterpriseAdvancedLicense`.
-    - Xử lý hết hạn/đang hết hạn: `isLicenseExpiring`, `isLicenseExpired`, `isLicensePastGracePeriod`, `daysToLicenseExpire` (bỏ qua Cloud).
-- Nhiều component/selector tham chiếu trực tiếp `getLicense(state)` để gate tính năng (MFA, LDAP groups, compliance, banner, menu, admin console, v.v.).
+## Các tính năng clustering hiện tại bị hạn chế Enterprise
 
-### Backend: nơi kiểm tra/thi hành license
-- Router/API: `server/channels/api4/license.go`
-  - `POST /license` thêm license, kiểm tra trial eligibility, lưu store, reload config, invalidate cache.
-  - `DELETE /license` xoá license.
-  - `POST /trial-license` xin trial license (kiểm tra quyền, eligibility).
-  - `GET /license/client` trả về client license (đã lọc theo quyền đọc license info).
-  - `GET /trial-license/prev` lấy trial trước đó (qua LicenseManager).
-- Service layer: `server/channels/app/platform/license.go`
-  - Nguồn license: ENV `MM_LICENSE` → DB `SystemActiveLicenseId` → file `LicenseFileLocation`.
-  - `SetLicense` đồng bộ `clientLicense` và phát sự kiện tới listeners.
-  - `SaveLicense` kiểm tra số user, hết hạn, dừng/khởi động workers/schedulers, lưu `SystemActiveLicenseId` và record.
-  - `RequestTrialLicense` gọi CWS, cài license, reload/invalidate cache.
-- App layer: `server/channels/app/license.go`
-  - Phơi bày `Server.License()`, `Load/Save/Set/Validate/ClientLicense()` và logic request trial có mở rộng trường.
-- Model: `server/public/model/license.go`
-  - Xác định tiers: Professional(10), Enterprise(20), Enterprise Advanced(30), Entry(30).
-  - Helper: `IsCloud`, `IsTrialLicense`, `IsExpired`, `IsPastGracePeriod`, `Minimum*License`.
+### 1. Redis Clustering
+- **Vị trí**: `server/platform/services/cache/provider.go`
+- **Hạn chế**: Yêu cầu license với `Features.Cluster = true`
+- **Code hiện tại**:
+  ```go
+  if (license == nil || !*license.Features.Cluster) && *cacheConfig.CacheType == model.CacheTypeRedis && !ps.forceEnableRedis {
+      return nil, fmt.Errorf("Redis cannot be used in an instance without a license or a license without clustering")
+  }
+  ```
 
-### Phân loại license và gating chính
-- Cloud: `license.Features.Cloud == true` → FE bỏ qua cảnh báo hết hạn; BE có luồng invalidate cache on change.
-- Self-hosted SKU:
-  - Starter (Free): FE coi "Starter Free" qua `isEnterpriseReady && license.IsLicensed === 'false'` hoặc `SelfHostedProducts === STARTER`.
-  - Professional ≥10: yêu cầu tối thiểu để bật một số features (ví dụ Shared Channels/Remote Cluster cũng mở nếu tối thiểu Pro).
-  - Enterprise ≥20: coi là Enterprise; nhiều tính năng admin nâng cao yêu cầu Enterprise.
-  - Enterprise Advanced ≥30.
-  - Entry: giấy phép đặc biệt do `FeatureFlags.EnableMattermostEntry` có thể mở enterprise features không có license DB.
+### 2. WebSocket Clustering
+- **Vị trí**: `server/channels/app/platform/cluster.go`
+- **Hạn chế**: Yêu cầu license với `Features.Cluster = true`
+- **Code hiện tại**:
+  ```go
+  if ps.License() != nil && *ps.Config().ClusterSettings.Enable && ps.clusterIFace != nil {
+      return ps.clusterIFace.IsLeader()
+  }
+  ```
 
-### Điểm cần chuẩn hoá/đồng bộ FE-BE
-- Định nghĩa tier: FE dùng `getLicenseTier` theo `LicenseSkus` và BE dùng `LicenseToLicenseTier`; cần mapping một-một.
-- Kiểm tra "Starter Free" ở FE: đồng bộ với backend semantics (SelfHostedProducts vs IsLicensed === 'false').
-- Trạng thái Cloud vs Self-hosted: FE dùng `license.Cloud === 'true'`; BE dùng `License.IsCloud()` theo `Features.Cloud`.
-- Trải nghiệm trial: FE hiển thị banner/modals; BE enforce `CanStartTrial` và sanctioned trial.
+### 3. Cluster Settings
+- **Vị trí**: `server/public/model/config.go`
+- **Hạn chế**: `ClusterSettings.Enable` mặc định là `false`
+- **Access control**: `environment_high_availability,write_restrictable,cloud_restrictable`
 
-### Kế hoạch thực hiện
-1) Kiểm kê và nhóm hoá gating FE
-   - Tạo danh sách feature → điều kiện license/sku/tier/flag.
-   - Chuẩn hoá dùng các helper trong `license_utils.ts` thay vì check rải rác `license.IsLicensed === 'true'`.
+## Kế hoạch thực hiện
 
-2) Chuẩn hoá tầng selector
-   - Tạo các selector có tên rõ nghĩa: `selectIsCloud`, `selectIsEnterpriseTier`, `selectIsProfessionalOrHigher`, `selectIsStarterFree` (bọc helpers).
-   - Dần thay thế các nơi đọc trực tiếp `getLicense(state)` để logic tập trung.
+### Phase 1: Chuẩn bị và phân tích (Tuần 1-2)
 
-3) Backend validation pass
-   - Rà `SaveLicense`, `LoadLicense`, `RequestTrialLicense` để đảm bảo error path rõ, log đủ, và cache invalidation nhất quán.
-   - Xác thực mapping SKU ↔ tier đồng nhất với FE.
+#### 1.1 Audit toàn bộ codebase
+- [ ] Tìm tất cả các kiểm tra license liên quan đến clustering
+- [ ] Xác định các dependencies và side effects
+- [ ] Đánh giá tác động đến performance và security
 
-4) Test plan
-   - Unit FE: `license_utils.test.ts` bổ sung matrix test cho tất cả SKU/tier (Starter/Pro/Enterprise/Advanced/Entry) và Cloud/Trial.
-   - Unit BE: test `Minimum*License`, `IsCloud/IsTrial/IsExpired`, `RequestTrialLicense` path (sanctioned trial, eligibility fail/pass).
-   - E2E: cài/ghi/xoá license, verify gating trong UI chính (Admin Console sections, LDAP/MFA, Marketplace enterprise plugins, Shared Channels).
+#### 1.2 Tạo feature flags
+- [ ] Thêm `EnableOpenSourceClustering` trong config
+- [ ] Tạo migration path cho existing deployments
+- [ ] Thiết lập monitoring và logging
 
-5) Tài liệu
-   - Mục "Licensing & Feature Gating" trong docs nội bộ: giải thích trường trong client license, SKU/tier, trình tự load license, và các selector FE nên dùng.
+### Phase 2: Loại bỏ hạn chế Redis (Tuần 3-4)
 
-### Checklist thực thi
-- [ ] Thêm/chuẩn hoá selector license tier ở FE.
-- [ ] Refactor các component chính sang dùng selector thay vì check ad-hoc.
-- [ ] Bổ sung test matrix FE/BE cho SKU và Cloud/Trial/Expiry.
-- [ ] Đối chiếu mapping SKU giữa FE `utils/constants` và BE `model.LicenseToLicenseTier`.
-- [ ] Viết docs nội bộ, link đến file này.
+#### 2.1 Sửa đổi Redis provider
+```go
+// File: server/platform/services/cache/provider.go
+// Thay đổi từ:
+if (license == nil || !*license.Features.Cluster) && *cacheConfig.CacheType == model.CacheTypeRedis && !ps.forceEnableRedis {
+    return nil, fmt.Errorf("Redis cannot be used in an instance without a license or a license without clustering")
+}
 
+// Thành:
+if *cacheConfig.CacheType == model.CacheTypeRedis {
+    // Redis luôn available, không cần kiểm tra license
+    ps.cacheProvider, err = cache.NewRedisProvider(...)
+}
+```
 
+#### 2.2 Cập nhật config validation
+```go
+// File: server/public/model/config.go
+// Thay đổi ClusterSettings access control
+type ClusterSettings struct {
+    Enable *bool `access:"write_restrictable"` // Loại bỏ environment_high_availability
+    // ... other fields
+}
+```
+
+### Phase 3: Loại bỏ hạn chế WebSocket Clustering (Tuần 5-6)
+
+#### 3.1 Sửa đổi cluster logic
+```go
+// File: server/channels/app/platform/cluster.go
+func (ps *PlatformService) IsLeader() bool {
+    // Loại bỏ kiểm tra license
+    if *ps.Config().ClusterSettings.Enable && ps.clusterIFace != nil {
+        return ps.clusterIFace.IsLeader()
+    }
+    return true
+}
+```
+
+#### 3.2 Cập nhật WebSocket publishing
+```go
+// File: server/channels/app/platform/cluster.go
+func (ps *PlatformService) Publish(message *model.WebSocketEvent) {
+    ps.PublishSkipClusterSend(message)
+    
+    // Luôn gửi cluster message nếu clustering enabled
+    if ps.clusterIFace != nil && *ps.Config().ClusterSettings.Enable {
+        // ... existing cluster logic
+    }
+}
+```
+
+### Phase 4: Cập nhật Cluster Settings (Tuần 7-8)
+
+#### 4.1 Thay đổi default values
+```go
+// File: server/public/model/config.go
+func (s *ClusterSettings) SetDefaults() {
+    if s.Enable == nil {
+        s.Enable = NewPointer(true) // Thay đổi từ false thành true
+    }
+    // ... other defaults
+}
+```
+
+#### 4.2 Loại bỏ access restrictions
+```go
+// Loại bỏ environment_high_availability từ tất cả cluster settings
+type ClusterSettings struct {
+    Enable                      *bool   `access:"write_restrictable"`
+    ClusterName                 *string `access:"write_restrictable"`
+    NetworkInterface           *string `access:"write_restrictable"`
+    // ... other fields
+}
+```
+
+### Phase 5: Cập nhật UI và Documentation (Tuần 9-10)
+
+#### 5.1 Cập nhật Admin Console
+- [ ] Loại bỏ warnings về Enterprise license cho clustering
+- [ ] Cập nhật help text và tooltips
+- [ ] Thêm migration guide cho existing users
+
+#### 5.2 Cập nhật Documentation
+- [ ] Cập nhật installation guides
+- [ ] Thêm clustering best practices
+- [ ] Cập nhật API documentation
+
+### Phase 6: Testing và Validation (Tuần 11-12)
+
+#### 6.1 Unit Tests
+- [ ] Cập nhật tất cả tests liên quan đến clustering
+- [ ] Thêm tests cho open source clustering
+- [ ] Test migration scenarios
+
+#### 6.2 Integration Tests
+- [ ] Test multi-instance deployments
+- [ ] Test Redis clustering without license
+- [ ] Test WebSocket clustering without license
+- [ ] Performance testing
+
+#### 6.3 End-to-End Tests
+- [ ] Test complete clustering setup
+- [ ] Test failover scenarios
+- [ ] Test load balancing
+
+## Migration Strategy
+
+### Cho Existing Deployments
+
+#### 1. Automatic Migration
+```go
+// Thêm migration logic
+func (s *ClusterSettings) MigrateFromEnterprise() {
+    // Nếu đang sử dụng clustering với license, giữ nguyên
+    // Nếu không có license nhưng có cluster config, enable clustering
+    if s.Enable == nil && hasClusterConfig() {
+        s.Enable = NewPointer(true)
+    }
+}
+```
+
+#### 2. Configuration Updates
+- [ ] Tự động enable clustering nếu detect Redis config
+- [ ] Thêm warnings cho users về changes
+- [ ] Provide rollback mechanism
+
+### Cho New Deployments
+- [ ] Clustering enabled by default
+- [ ] Simplified setup process
+- [ ] Clear documentation về benefits
+
+## Risk Assessment và Mitigation
+
+### High Risk
+1. **Performance Impact**
+   - **Risk**: Clustering có thể impact performance
+   - **Mitigation**: Comprehensive performance testing, monitoring
+
+2. **Security Concerns**
+   - **Risk**: Clustering có thể tạo security vulnerabilities
+   - **Mitigation**: Security audit, encryption requirements
+
+### Medium Risk
+1. **Configuration Complexity**
+   - **Risk**: Users có thể misconfigure clustering
+   - **Mitigation**: Better defaults, validation, documentation
+
+2. **Backward Compatibility**
+   - **Risk**: Breaking changes cho existing deployments
+   - **Mitigation**: Gradual migration, feature flags
+
+### Low Risk
+1. **Documentation Updates**
+   - **Risk**: Outdated documentation
+   - **Mitigation**: Comprehensive documentation review
+
+## Success Metrics
+
+### Technical Metrics
+- [ ] 100% clustering features available without license
+- [ ] Zero performance regression
+- [ ] All existing tests pass
+- [ ] New clustering tests pass
+
+### User Metrics
+- [ ] Increased adoption of clustering features
+- [ ] Reduced support tickets về licensing
+- [ ] Positive feedback từ community
+
+## Timeline
+
+| Phase | Duration | Deliverables |
+|-------|----------|--------------|
+| Phase 1 | 2 tuần | Audit report, feature flags |
+| Phase 2 | 2 tuần | Redis clustering without license |
+| Phase 3 | 2 tuần | WebSocket clustering without license |
+| Phase 4 | 2 tuần | Updated cluster settings |
+| Phase 5 | 2 tuần | Updated UI and docs |
+| Phase 6 | 2 tuần | Testing and validation |
+
+**Total Duration**: 12 tuần (3 tháng)
+
+## Rollback Plan
+
+Nếu có issues nghiêm trọng:
+
+1. **Immediate Rollback**
+   - Revert code changes
+   - Restore license checks
+   - Notify users
+
+2. **Gradual Rollback**
+   - Disable feature flags
+   - Provide migration path back
+   - Monitor impact
+
+3. **Communication**
+   - Notify community
+   - Update documentation
+   - Provide support
+
+## Conclusion
+
+Kế hoạch này sẽ loại bỏ hoàn toàn hạn chế Enterprise về clustering, cho phép tất cả users sử dụng tính năng clustering mà không cần license. Điều này sẽ:
+
+- Tăng adoption của Mattermost
+- Cải thiện user experience
+- Giảm complexity trong deployment
+- Tăng community engagement
+
+Việc thực hiện sẽ được thực hiện một cách cẩn thận với comprehensive testing và monitoring để đảm bảo stability và performance.

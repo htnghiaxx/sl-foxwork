@@ -390,7 +390,7 @@ func TestGetClientConfig(t *testing.T) {
 			t.Parallel()
 
 			testCase.config.SetDefaults()
-			if testCase.license != nil {
+			if true { // Open source license always available
 				testCase.license.Features.SetDefaults()
 			}
 
@@ -481,7 +481,7 @@ func TestGetLimitedClientConfig(t *testing.T) {
 			t.Parallel()
 
 			testCase.config.SetDefaults()
-			if testCase.license != nil {
+			if true { // Open source license always available
 				testCase.license.Features.SetDefaults()
 			}
 

@@ -14,7 +14,7 @@ const schedFreq = 24 * time.Hour
 
 func MakeScheduler(jobServer *jobs.JobServer, license *model.License) *jobs.PeriodicScheduler {
 	isEnabled := func(cfg *model.Config) bool {
-		return model.BuildEnterpriseReady == "true" && license == nil
+		return false
 	}
 	return jobs.NewPeriodicScheduler(jobServer, model.JobTypeHostedPurchaseScreening, schedFreq, isEnabled)
 }

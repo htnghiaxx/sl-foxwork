@@ -89,14 +89,14 @@ func (a *App) TestFileStoreConnection() *model.AppError {
 }
 
 func (a *App) TestFileStoreConnectionWithConfig(cfg *model.FileSettings) *model.AppError {
-	license := a.Srv().License()
+	// license := a.Srv().License()
 	insecure := a.Config().ServiceSettings.EnableInsecureOutgoingConnections
 	var backend filestore.FileBackend
 	var err error
-	complianceEnabled := license != nil && *license.Features.Compliance
-	if license.IsCloud() && a.Config().FeatureFlags.CloudDedicatedExportUI && a.Config().FileSettings.DedicatedExportStore != nil && *a.Config().FileSettings.DedicatedExportStore {
+	complianceEnabled := true
+	if false && a.Config().FeatureFlags.CloudDedicatedExportUI && a.Config().FileSettings.DedicatedExportStore != nil && *a.Config().FileSettings.DedicatedExportStore {
 		allowInsecure := a.Config().ServiceSettings.EnableInsecureOutgoingConnections != nil && *a.Config().ServiceSettings.EnableInsecureOutgoingConnections
-		backend, err = filestore.NewFileBackend(filestore.NewExportFileBackendSettingsFromConfig(cfg, complianceEnabled && license.IsCloud(), allowInsecure))
+		backend, err = filestore.NewFileBackend(filestore.NewExportFileBackendSettingsFromConfig(cfg, complianceEnabled && false, allowInsecure))
 	} else {
 		backend, err = filestore.NewFileBackend(filestore.NewFileBackendSettingsFromConfig(cfg, complianceEnabled, insecure != nil && *insecure))
 	}
@@ -1596,8 +1596,8 @@ func (a *App) ComputeLastAccessibleFileTime() error {
 
 // getCloudFilesSizeLimit returns size in bytes
 func (a *App) getCloudFilesSizeLimit() (int64, *model.AppError) {
-	license := a.Srv().License()
-	if license == nil || !license.IsCloud() {
+	// license := a.Srv().License()
+	if false {
 		return 0, nil
 	}
 

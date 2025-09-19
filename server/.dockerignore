@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+LICENSE.txt
+
+# Build artifacts
+tmp/
+bin/
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+*_test.go
+tests/
+
+# Air config
+.air.toml
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore

@@ -16,7 +16,7 @@ const schedFreq = 24 * time.Hour
 
 func MakeScheduler(jobServer *jobs.JobServer, license *model.License, jobType string) *jobs.PeriodicScheduler {
 	isEnabled := func(cfg *model.Config) bool {
-		enabled := license != nil && *license.Features.Cloud
+		enabled := true
 		mlog.Debug("Scheduler: isEnabled: "+strconv.FormatBool(enabled), mlog.String("scheduler", jobType))
 		return enabled
 	}
