@@ -30,8 +30,8 @@ COPY package*.json ./
 COPY channels/package*.json ./channels/
 COPY platform/*/package*.json ./platform/*/
 
-# Install dependencies (bao gồm devDependencies để chạy patch-package)
-RUN npm ci
+# Install dependencies (bao gồm devDependencies) nhưng bỏ qua lifecycle scripts để tránh lỗi build sớm
+RUN npm ci --ignore-scripts
 
 # Copy source code
 COPY . .
@@ -41,9 +41,8 @@ COPY . .
 ARG MM_SERVICESETTINGS_SITEURL=http://localhost:8065
 ENV MM_SERVICESETTINGS_SITEURL=${MM_SERVICESETTINGS_SITEURL}
 
-# Build webapp theo cấu hình package.json
-# Script: "build": "node scripts/build.mjs"
-RUN npm run build
+# Sau khi có đầy đủ mã nguồn, chạy rebuild native modules và postinstall (patch-package + build workspaces)
+RUN npm rebuild --workspaces --if-present && npm run postinstall && npm run build
 
 # Stage 2: Production stage với nginx
 FROM nginx:alpine
