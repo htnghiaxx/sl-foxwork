@@ -306,20 +306,10 @@ var config = {
 function generateCSP() {
     let csp = 'script-src \'self\' js.stripe.com/v3';
 
-    if (DEV) {
-        // Development source maps require eval
-        csp += ' \'unsafe-eval\'';
-    } else {
-        // Honour backend DeveloperFlags when building production assets
-        // This is useful when serving root.html via Nginx (meta CSP),
-        // to keep behaviour aligned with backend headers in dev-like setups.
-        const devFlags = process.env.MM_SERVICESETTINGS_DEVELOPERFLAGS || '';
-        if (devFlags.includes('unsafe-eval=true')) {
-            csp += ' \'unsafe-eval\'';
-        }
-        if (devFlags.includes('unsafe-inline=true')) {
-            csp += ' \'unsafe-inline\'';
-        }
+    // Only add unsafe-inline if explicitly enabled via developer flags
+    const devFlags = process.env.MM_SERVICESETTINGS_DEVELOPERFLAGS || '';
+    if (devFlags.includes('unsafe-inline=true')) {
+        csp += ' \'unsafe-inline\'';
     }
 
     return csp;
@@ -415,7 +405,8 @@ async function initializeModuleFederation() {
 if (DEV) {
     // Development mode configuration
     config.mode = 'development';
-    config.devtool = 'eval-cheap-module-source-map';
+    // Use source-map instead of eval-cheap-module-source-map to avoid CSP unsafe-eval requirement
+    config.devtool = 'source-map';
 } else {
     // Production mode configuration
     config.mode = 'production';
@@ -442,7 +433,7 @@ if (targetIsDevServer) {
 
     config = {
         ...config,
-        devtool: 'eval-cheap-module-source-map',
+        devtool: 'source-map',
         devServer: {
             liveReload: true,
             proxy: [

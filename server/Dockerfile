@@ -1,6 +1,34 @@
 # Dockerfile cho Mattermost Server Development
 
-# Stage 1: Build stage
+# Stage 1: Webapp build stage
+FROM node:20-alpine AS webapp-builder
+
+# Cài đặt dependencies cần thiết cho build webapp
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git \
+    bash
+
+# Lưu ý: Docker build context nên là root repo và dùng -f server/Dockerfile
+WORKDIR /workspace/webapp
+
+# Copy package files trước để cache deps
+COPY webapp/package*.json ./
+COPY webapp/channels/package*.json ./channels/
+
+# Cài deps cho webapp
+RUN npm ci --ignore-scripts
+
+# Copy source và build
+COPY webapp/ ./
+ARG MM_SERVICESETTINGS_SITEURL=http://localhost:8065
+ENV MM_SERVICESETTINGS_SITEURL=${MM_SERVICESETTINGS_SITEURL}
+RUN npm rebuild --workspaces --if-present && npm run postinstall && npm run build
+
+
+# Stage 2: Server build stage
 FROM golang:1.25.1-alpine AS builder
 
 # Cài đặt các dependencies cần thiết
@@ -46,7 +74,7 @@ RUN addgroup -g 2000 mattermost && \
     adduser -D -u 2000 -G mattermost mattermost
 
 # Tạo thư mục cần thiết
-RUN mkdir -p /mattermost/data /mattermost/logs /mattermost/plugins /mattermost/client/plugins && \
+RUN mkdir -p /mattermost/data /mattermost/logs /mattermost/plugins /mattermost/client /mattermost/client/plugins && \
     chown -R mattermost:mattermost /mattermost
 
 # Copy binary từ builder stage
@@ -54,13 +82,16 @@ COPY --from=builder --chown=mattermost:mattermost /app/tmp/mattermost-dev /matte
 
 
 # Copy i18n translation files
-COPY --chown=mattermost:mattermost i18n/ /mattermost/i18n/
+COPY --chown=mattermost:mattermost server/i18n/ /mattermost/i18n/
 
 # Copy templates directory
-COPY --chown=mattermost:mattermost templates/ /mattermost/templates/
+COPY --chown=mattermost:mattermost server/templates/ /mattermost/templates/
 
 # Copy fonts directory
-COPY --chown=mattermost:mattermost fonts/ /mattermost/fonts/
+COPY --chown=mattermost:mattermost server/fonts/ /mattermost/fonts/
+
+# Copy webapp built files vào thư mục client của server
+COPY --from=webapp-builder --chown=mattermost:mattermost /workspace/webapp/channels/dist/ /mattermost/client/
 
 # Set working directory
 WORKDIR /mattermost

@@ -30,6 +30,11 @@ services:
       - MM_CACHESETTINGS_REDISDB=0
       - MM_CACHESETTINGS_REDISCACHEPREFIX=mattermost
       - MM_CACHESETTINGS_DISABLECLIENTCACHE=false
+      - MM_ODOO_SSO_ENABLED=true
+      - MM_ODOO_BASE_URL=https://soly.com.vn/
+      - MM_ODOO_DB=soly
+      - MM_ODOO_JSONRPC_PATH=/jsonrpc
+      - MM_ODOO_TIMEOUT_MS=8000
     depends_on:
       - postgres
       - redis
