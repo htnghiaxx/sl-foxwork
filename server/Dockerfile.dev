@@ -50,6 +50,15 @@ COPY --from=builder --chown=mattermost:mattermost /app/tmp/mattermost-dev /matte
 # Copy config files nếu có
 COPY --chown=mattermost:mattermost config/ /mattermost/config/
 
+# Copy i18n translation files
+COPY --chown=mattermost:mattermost i18n/ /mattermost/i18n/
+
+# Copy templates directory
+COPY --chown=mattermost:mattermost templates/ /mattermost/templates/
+
+# Copy fonts directory
+COPY --chown=mattermost:mattermost fonts/ /mattermost/fonts/
+
 # Set working directory
 WORKDIR /mattermost
 
