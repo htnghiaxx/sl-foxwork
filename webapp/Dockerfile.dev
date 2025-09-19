@@ -20,7 +20,12 @@ RUN apk add --no-cache \
     libtool \
     pkgconfig \
     bash \
-    giflib-dev
+    giflib-dev \
+    pixman-dev \
+    cairo-dev \
+    pango-dev \
+    jpeg-dev \
+    freetype-dev
 
 # Tạo thư mục làm việc
 WORKDIR /app

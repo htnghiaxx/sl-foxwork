@@ -95,6 +95,7 @@ func generateDevCSP(c Context) string {
 	if model.BuildNumber == "dev" {
 		devCSP = append(devCSP, "'unsafe-inline'")
 	}
+	c.Logger.Info("DeveloperFlags", mlog.String("DeveloperFlags", *c.App.Config().ServiceSettings.DeveloperFlags))
 
 	// Add supported flags for debugging during development, even if not on a dev build.
 	if *c.App.Config().ServiceSettings.DeveloperFlags != "" {

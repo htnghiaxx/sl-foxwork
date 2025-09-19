@@ -309,6 +309,17 @@ function generateCSP() {
     if (DEV) {
         // Development source maps require eval
         csp += ' \'unsafe-eval\'';
+    } else {
+        // Honour backend DeveloperFlags when building production assets
+        // This is useful when serving root.html via Nginx (meta CSP),
+        // to keep behaviour aligned with backend headers in dev-like setups.
+        const devFlags = process.env.MM_SERVICESETTINGS_DEVELOPERFLAGS || '';
+        if (devFlags.includes('unsafe-eval=true')) {
+            csp += ' \'unsafe-eval\'';
+        }
+        if (devFlags.includes('unsafe-inline=true')) {
+            csp += ' \'unsafe-inline\'';
+        }
     }
 
     return csp;
