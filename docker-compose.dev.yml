@@ -5,7 +5,7 @@ services:
   mattermost-server:
     build:
       context: ./server
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: mattermost-server-dev
     ports:
       - "8065:8065"
