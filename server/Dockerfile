@@ -14,12 +14,18 @@ RUN apk add --no-cache \
 # Tạo thư mục làm việc
 WORKDIR /app
 
-# Copy go.mod và go.sum trước để cache dependencies
-COPY go.mod go.sum ./
-RUN go mod download
+# Bật chế độ workspace để Go nhận go.work
+ENV GOWORK=auto
+
+# Copy go.mod, go.sum và go.work trước để tối ưu cache deps và đồng bộ workspace
+COPY go.mod go.sum go.work ./
 
 # Copy source code
 COPY . .
+
+# Đồng bộ workspace rồi tải dependencies sau khi toàn bộ source đã có
+RUN go work sync && \
+    go mod download
 
 # Build Mattermost server binary theo cấu hình air.toml
 # cmd = "go build -o ./tmp/mattermost-dev ./cmd/mattermost"
