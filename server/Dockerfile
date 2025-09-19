@@ -1,5 +1,4 @@
 # Dockerfile cho Mattermost Server Development
-# Dựa trên cấu hình air.toml
 
 # Stage 1: Build stage
 FROM golang:1.25.1-alpine AS builder
