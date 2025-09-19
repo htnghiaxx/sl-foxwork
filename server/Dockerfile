@@ -25,6 +25,7 @@ WORKDIR /workspace/webapp
 COPY webapp/package*.json ./
 COPY webapp/channels/package*.json ./channels/
 COPY webapp/patches/ ./patches/
+COPY webapp/platform/ ./platform/
 
 # Cài deps cho webapp
 RUN npm install
