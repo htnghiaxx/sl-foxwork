@@ -30,17 +30,16 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy package files để cache dependencies
-COPY ./webapp/package*.json ./
-COPY ./webapp/channels/package*.json ./channels/
-COPY ./webapp/platform/*/package*.json ./platform/*/
-COPY ./webapp/patches/* ./patches/
-COPY ./webapp/platform/ ./platform/
+COPY webapp/package*.json ./
+COPY webapp/channels/package*.json ./channels/
+COPY webapp/patches/* ./patches/
+COPY webapp/platform/ ./platform/
 
 # Install dependencies (bao gồm devDependencies) nhưng bỏ qua lifecycle scripts để tránh lỗi build sớm
 RUN npm install
 
 # Copy source code
-COPY ./webapp/ .
+COPY webapp/ .
 
 # Sau khi có đầy đủ mã nguồn, chạy rebuild native modules và postinstall (patch-package + build workspaces)
 RUN npm run build
