@@ -24,6 +24,7 @@ WORKDIR /workspace/webapp
 # Copy package files trước để cache deps
 COPY webapp/package*.json ./
 COPY webapp/channels/package*.json ./channels/
+COPY webapp/patches/ ./patches/
 
 # Cài deps cho webapp
 RUN npm install
