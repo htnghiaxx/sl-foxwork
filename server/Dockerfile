@@ -19,13 +19,11 @@ COPY webapp/package*.json ./
 COPY webapp/channels/package*.json ./channels/
 
 # Cài deps cho webapp
-RUN npm ci --ignore-scripts
+RUN npm install
 
 # Copy source và build
 COPY webapp/ ./
-ARG MM_SERVICESETTINGS_SITEURL=http://localhost:8065
-ENV MM_SERVICESETTINGS_SITEURL=${MM_SERVICESETTINGS_SITEURL}
-RUN npm rebuild --workspaces --if-present && npm run postinstall && npm run build
+RUN npm run build
 
 
 # Stage 2: Server build stage
