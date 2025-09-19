@@ -17,7 +17,7 @@ tmp_dir = "tmp"
   bin = "tmp/mattermost-dev"
 
   # Pass config path relative to server/
-  args_bin = ["--config", "config/config.json"]
+  # args_bin = ["--config", "config/config.json"]
 
   # Debounce rapid changes
   delay = 1000

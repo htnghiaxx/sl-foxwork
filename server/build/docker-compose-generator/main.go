@@ -26,7 +26,7 @@ func main() {
 	validServices := map[string]int{
 		"postgres":      5432,
 		"minio":         9000,
-		"inbucket":      9001,
+		// "inbucket":      9001,
 		"openldap":      389,
 		"elasticsearch": 9200,
 		"opensearch":    9201,

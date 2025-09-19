@@ -16,16 +16,17 @@ services:
     extends:
         file: build/docker-compose.common.yml
         service: minio
-  inbucket:
-    restart: 'no'
-    container_name: mattermost-inbucket
-    ports:
-      - "9001:9001"
-      - "10025:10025"
-      - "10110:10110"
-    extends:
-        file: build/docker-compose.common.yml
-        service: inbucket
+  # inbucket:
+  #   restart: 'no'
+  #   container_name: mattermost-inbucket
+  #   platform: linux/arm64/v8
+  #   ports:
+  #     - "9001:9001"
+  #     - "10025:10025"
+  #     - "10110:10110"
+  #   extends:
+  #       file: build/docker-compose.common.yml
+  #       service: inbucket
   openldap:
     restart: 'no'
     container_name: mattermost-openldap
