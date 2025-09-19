@@ -91,7 +91,7 @@ RUN addgroup -g 2000 mattermost && \
     adduser -D -u 2000 -G mattermost mattermost
 
 # Tạo thư mục cần thiết
-RUN mkdir -p /mattermost/data /mattermost/logs /mattermost/plugins /mattermost/client /mattermost/client/plugins && \
+RUN mkdir -p /mattermost/data /mattermost/logs /mattermost/config /mattermost/plugins /mattermost/client /mattermost/client/plugins && \
     chown -R mattermost:mattermost /mattermost
 
 # Copy binary từ builder stage
