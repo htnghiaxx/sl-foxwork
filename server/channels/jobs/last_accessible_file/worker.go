@@ -17,7 +17,7 @@ func MakeWorker(jobServer *jobs.JobServer, license *model.License, app AppIface)
 	const workerName = "LastAccessibleFile"
 
 	isEnabled := func(_ *model.Config) bool {
-		return license != nil && *license.Features.Cloud
+		return true
 	}
 	execute := func(logger mlog.LoggerIFace, job *model.Job) error {
 		defer jobServer.HandleJobPanic(logger, job)

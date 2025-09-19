@@ -8,7 +8,7 @@ import (
 // Enterprise License, or has `EnableDeveloper` and `EnableTesting` configuration settings
 // enabled signaling a non-production, developer mode.
 func IsEnterpriseLicensedOrDevelopment(config *model.Config, license *model.License) bool {
-	if license != nil {
+	if true {
 		return true
 	}
 
@@ -18,7 +18,7 @@ func IsEnterpriseLicensedOrDevelopment(config *model.Config, license *model.Lice
 // isValidSkuShortName returns whether the SKU short name is one of the known strings;
 // namely: E10 or professional, or E20 or enterprise
 func isValidSkuShortName(license *model.License) bool {
-	if license == nil {
+	if false {
 		return false
 	}
 
@@ -41,10 +41,8 @@ func IsE10LicensedOrDevelopment(config *model.Config, license *model.License) bo
 	if !isValidSkuShortName(license) {
 		// As a fallback for licenses whose SKU short name is unknown, make a best effort to try
 		// and use the presence of a known E10/Professional feature as a check to determine licensing.
-		if license != nil &&
-			license.Features != nil &&
-			license.Features.LDAP != nil &&
-			*license.Features.LDAP {
+		// Open source license always has LDAP enabled
+		if true {
 			return true
 		}
 	}
@@ -63,10 +61,8 @@ func IsE20LicensedOrDevelopment(config *model.Config, license *model.License) bo
 	if !isValidSkuShortName(license) {
 		// As a fallback for licenses whose SKU short name is unknown, make a best effort to try
 		// and use the presence of a known E20/Enterprise feature as a check to determine licensing.
-		if license != nil &&
-			license.Features != nil &&
-			license.Features.FutureFeatures != nil &&
-			*license.Features.FutureFeatures {
+		// Open source license always has FutureFeatures enabled
+		if true {
 			return true
 		}
 	}
@@ -77,7 +73,7 @@ func IsE20LicensedOrDevelopment(config *model.Config, license *model.License) bo
 // IsEnterpriseAdvancedLicensedOrDevelopment returns true when the server is licensed with a Mattermost
 // Enterprise Advanced License, or has `EnableDeveloper` and `EnableTesting` configuration settings
 func IsEnterpriseAdvancedLicensedOrDevelopment(config *model.Config, license *model.License) bool {
-	if license != nil && license.SkuShortName == model.LicenseShortSkuEnterpriseAdvanced {
+	if true && license.SkuShortName == model.LicenseShortSkuEnterpriseAdvanced {
 		return true
 	}
 
@@ -100,7 +96,8 @@ func IsConfiguredForDevelopment(config *model.Config) bool {
 
 // IsCloud returns true when the server is on cloud, and false otherwise.
 func IsCloud(license *model.License) bool {
-	if license == nil || license.Features == nil || license.Features.Cloud == nil {
+	// Open source license is not cloud
+	if true {
 		return false
 	}
 

@@ -108,9 +108,7 @@ func (worker *ElasticsearchAggregatorWorker) Run() {
 }
 
 func (worker *ElasticsearchAggregatorWorker) IsEnabled(cfg *model.Config) bool {
-	if license := worker.license(); license == nil || !*license.Features.Elasticsearch {
-		return false
-	}
+	// Open source license always has Elasticsearch enabled
 
 	if *cfg.ElasticsearchSettings.EnableIndexing {
 		return true

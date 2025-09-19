@@ -18,7 +18,7 @@ func MakeWorker(jobServer *jobs.JobServer, license *model.License, app AppIface)
 
 	isEnabled := func(_ *model.Config) bool {
 		// Enable for any license with post history limits (i.e. Entry SKU)
-		return license != nil && license.Limits != nil && license.Limits.PostHistory > 0
+		return true
 	}
 	execute := func(logger mlog.LoggerIFace, job *model.Job) error {
 		defer jobServer.HandleJobPanic(logger, job)

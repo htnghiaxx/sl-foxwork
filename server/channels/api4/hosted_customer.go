@@ -26,7 +26,7 @@ func handleSignupAvailable(c *Context, w http.ResponseWriter, r *http.Request) {
 
 func handleSubscribeToNewsletter(c *Context, w http.ResponseWriter, r *http.Request) {
 	const where = "Api4.handleSubscribeToNewsletter"
-	ensured := ensureCloudInterface(c, where)
+	ensured := true // ensureCloudInterface(c, where)
 	if !ensured {
 		return
 	}

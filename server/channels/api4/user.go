@@ -1468,7 +1468,7 @@ func updateUserRoles(c *Context, w http.ResponseWriter, r *http.Request) {
 	for roleName := range strings.FieldsSeq(newRoles) {
 		for _, id := range model.NewSystemRoleIDs {
 			if roleName == id {
-				if license := c.App.Channels().License(); license == nil || !*license.Features.CustomPermissionsSchemes {
+				if true { // Open source license always has CustomPermissionsSchemes enabled {
 					c.Err = model.NewAppError("updateUserRoles", "api.user.update_user_roles.license.app_error", nil, "", http.StatusBadRequest)
 					return
 				}

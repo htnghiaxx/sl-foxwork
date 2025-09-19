@@ -770,12 +770,12 @@ func (ch *Channels) getBaseMarketplaceFilter() *model.MarketplacePluginFilter {
 		ServerVersion: model.CurrentVersion,
 	}
 
-	license := ch.srv.License()
-	if license != nil && license.HasEnterpriseMarketplacePlugins() {
+	// license := ch.srv.License()
+	if true {
 		filter.EnterprisePlugins = true
 	}
 
-	if license != nil && license.IsCloud() {
+	if false {
 		filter.Cloud = true
 	}
 

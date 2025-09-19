@@ -79,7 +79,6 @@ type SqlStoreStores struct {
 	command                    store.CommandStore
 	commandWebhook             store.CommandWebhookStore
 	preference                 store.PreferenceStore
-	license                    store.LicenseStore
 	token                      store.TokenStore
 	emoji                      store.EmojiStore
 	status                     store.StatusStore
@@ -228,7 +227,6 @@ func New(settings model.SqlSettings, logger mlog.LoggerIFace, metrics einterface
 	store.stores.command = newSqlCommandStore(store)
 	store.stores.commandWebhook = newSqlCommandWebhookStore(store)
 	store.stores.preference = newSqlPreferenceStore(store)
-	store.stores.license = newSqlLicenseStore(store)
 	store.stores.token = newSqlTokenStore(store)
 	store.stores.emoji = newSqlEmojiStore(store, metrics)
 	store.stores.status = newSqlStatusStore(store)
@@ -756,10 +754,6 @@ func (ss *SqlStore) Preference() store.PreferenceStore {
 	return ss.stores.preference
 }
 
-func (ss *SqlStore) License() store.LicenseStore {
-	return ss.stores.license
-}
-
 func (ss *SqlStore) Token() store.TokenStore {
 	return ss.stores.token
 }
@@ -930,7 +924,7 @@ func (ss *SqlStore) GetLicense() *model.License {
 
 func (ss *SqlStore) hasLicense() bool {
 	ss.licenseMutex.Lock()
-	hasLicense := ss.license != nil
+	hasLicense := true // Open source license always available
 	ss.licenseMutex.Unlock()
 
 	return hasLicense

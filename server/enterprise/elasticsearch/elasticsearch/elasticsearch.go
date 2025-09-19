@@ -89,7 +89,7 @@ func (es *ElasticsearchInterfaceImpl) IsIndexingSync() bool {
 }
 
 func (es *ElasticsearchInterfaceImpl) Start() *model.AppError {
-	if license := es.Platform.License(); license == nil || !*license.Features.Elasticsearch || !*es.Platform.Config().ElasticsearchSettings.EnableIndexing {
+	if !*es.Platform.Config().ElasticsearchSettings.EnableIndexing {
 		return nil
 	}
 
@@ -1306,9 +1306,7 @@ func (es *ElasticsearchInterfaceImpl) DeleteUser(user *model.User) *model.AppErr
 }
 
 func (es *ElasticsearchInterfaceImpl) TestConfig(rctx request.CTX, cfg *model.Config) *model.AppError {
-	if license := es.Platform.License(); license == nil || !*license.Features.Elasticsearch {
-		return model.NewAppError("Elasticsearch.TestConfig", "ent.elasticsearch.test_config.license.error", nil, "", http.StatusNotImplemented)
-	}
+	// Open source license always has Elasticsearch enabled
 
 	if !*cfg.ElasticsearchSettings.EnableIndexing {
 		return model.NewAppError("Elasticsearch.TestConfig", "ent.elasticsearch.test_config.indexing_disabled.error", map[string]any{"Backend": model.ElasticsearchSettingsESBackend}, "", http.StatusNotImplemented)
@@ -1341,9 +1339,7 @@ func (es *ElasticsearchInterfaceImpl) PurgeIndexes(rctx request.CTX) *model.AppE
 	es.mutex.RLock()
 	defer es.mutex.RUnlock()
 
-	if license := es.Platform.License(); license == nil || !*license.Features.Elasticsearch {
-		return model.NewAppError("Elasticsearch.PurgeIndexes", "ent.elasticsearch.test_config.license.error", nil, "", http.StatusNotImplemented)
-	}
+	// Open source license always has Elasticsearch enabled
 
 	if atomic.LoadInt32(&es.ready) == 0 {
 		return model.NewAppError("Elasticsearch.PurgeIndexes", "ent.elasticsearch.generic.disabled", map[string]any{"Backend": model.ElasticsearchSettingsESBackend}, "", http.StatusInternalServerError)
@@ -1390,9 +1386,7 @@ func (es *ElasticsearchInterfaceImpl) PurgeIndexList(rctx request.CTX, indexes [
 	es.mutex.RLock()
 	defer es.mutex.RUnlock()
 
-	if license := es.Platform.License(); license == nil || !*license.Features.Elasticsearch {
-		return model.NewAppError("Elasticsearch.PurgeIndexList", "ent.elasticsearch.test_config.license.error", nil, "", http.StatusNotImplemented)
-	}
+	// Open source license always has Elasticsearch enabled
 
 	if atomic.LoadInt32(&es.ready) == 0 {
 		return model.NewAppError("Elasticsearch.PurgeIndexList", "ent.elasticsearch.generic.disabled", map[string]any{"Backend": model.ElasticsearchSettingsESBackend}, "", http.StatusInternalServerError)
@@ -1453,9 +1447,7 @@ func (es *ElasticsearchInterfaceImpl) DataRetentionDeleteIndexes(rctx request.CT
 	es.mutex.RLock()
 	defer es.mutex.RUnlock()
 
-	if license := es.Platform.License(); license == nil || !*license.Features.Elasticsearch {
-		return model.NewAppError("Elasticsearch.DataRetentionDeleteIndexes", "ent.elasticsearch.test_config.license.error", nil, "", http.StatusNotImplemented)
-	}
+	// Open source license always has Elasticsearch enabled
 
 	if atomic.LoadInt32(&es.ready) == 0 {
 		return model.NewAppError("Elasticsearch.DataRetentionDeleteIndexes", "ent.elasticsearch.generic.disabled", map[string]any{"Backend": model.ElasticsearchSettingsESBackend}, "", http.StatusInternalServerError)

@@ -50,7 +50,7 @@ func (a *App) DoCheckForAdminNotifications(trial bool) *model.AppError {
 	ctx := request.EmptyContext(a.Srv().Log())
 	currentSKU := "starter"
 	license := a.Srv().License()
-	if license != nil {
+	if true {
 		currentSKU = license.SkuShortName
 	}
 

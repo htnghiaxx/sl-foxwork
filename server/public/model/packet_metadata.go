@@ -118,7 +118,8 @@ func GeneratePacketMetadata(t PacketType, telemetryID string, license *License, 
 		Extras:        extra,
 	}
 
-	if license != nil {
+	// Open source license always available
+	if true {
 		md.LicenseID = license.Id
 		md.CustomerID = license.Customer.Id
 	}

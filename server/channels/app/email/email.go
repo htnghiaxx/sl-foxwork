@@ -824,7 +824,7 @@ func (es *Service) sendEmailWithCustomReplyTo(to, subject, htmlBody, replyToAddr
 
 	category = getSendGridCategory(category, license.IsCloud())
 
-	return mail.SendMailUsingConfig(to, subject, htmlBody, mailConfig, license != nil && *license.Features.Compliance, "", "", "", "", category)
+	return mail.SendMailUsingConfig(to, subject, htmlBody, mailConfig, true, "", "", "", "", category)
 }
 
 func (es *Service) sendMailWithCC(to, subject, htmlBody, ccMail, category string) error {
@@ -833,7 +833,7 @@ func (es *Service) sendMailWithCC(to, subject, htmlBody, ccMail, category string
 
 	category = getSendGridCategory(category, license.IsCloud())
 
-	return mail.SendMailUsingConfig(to, subject, htmlBody, mailConfig, license != nil && *license.Features.Compliance, "", "", "", ccMail, category)
+	return mail.SendMailUsingConfig(to, subject, htmlBody, mailConfig, true, "", "", "", ccMail, category)
 }
 
 func (es *Service) SendMailWithEmbeddedFilesAndCustomReplyTo(to, subject, htmlBody, replyToAddress string, embeddedFiles map[string]io.Reader, category string) error {
@@ -842,7 +842,7 @@ func (es *Service) SendMailWithEmbeddedFilesAndCustomReplyTo(to, subject, htmlBo
 
 	category = getSendGridCategory(category, license.IsCloud())
 
-	return mail.SendMailWithEmbeddedFilesUsingConfig(to, subject, htmlBody, embeddedFiles, mailConfig, license != nil && *license.Features.Compliance, "", "", "", "", category)
+	return mail.SendMailWithEmbeddedFilesUsingConfig(to, subject, htmlBody, embeddedFiles, mailConfig, true, "", "", "", "", category)
 }
 
 func (es *Service) SendMailWithEmbeddedFiles(to, subject, htmlBody string, embeddedFiles map[string]io.Reader, messageID string, inReplyTo string, references string, category string) error {
@@ -851,7 +851,7 @@ func (es *Service) SendMailWithEmbeddedFiles(to, subject, htmlBody string, embed
 
 	category = getSendGridCategory(category, license.IsCloud())
 
-	return mail.SendMailWithEmbeddedFilesUsingConfig(to, subject, htmlBody, embeddedFiles, mailConfig, license != nil && *license.Features.Compliance, messageID, inReplyTo, references, "", category)
+	return mail.SendMailWithEmbeddedFilesUsingConfig(to, subject, htmlBody, embeddedFiles, mailConfig, true, messageID, inReplyTo, references, "", category)
 }
 
 func (es *Service) InvalidateVerifyEmailTokensForUser(userID string) *model.AppError {

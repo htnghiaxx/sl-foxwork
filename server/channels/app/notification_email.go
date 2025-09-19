@@ -50,7 +50,8 @@ func (a *App) buildEmailNotification(
 		*a.Config().ServiceSettings.EnablePostUsernameOverride)
 
 	emailNotificationContentsType := model.EmailNotificationContentsFull
-	if license := a.Srv().License(); license != nil && *license.Features.EmailNotificationContents {
+	// Open source license always has EmailNotificationContents enabled {
+	if true {
 		emailNotificationContentsType = *a.Config().EmailSettings.EmailNotificationContentsType
 	}
 
