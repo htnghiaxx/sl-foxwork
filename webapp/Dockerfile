@@ -34,9 +34,11 @@ WORKDIR /app
 COPY package*.json ./
 COPY channels/package*.json ./channels/
 COPY platform/*/package*.json ./platform/*/
+COPY patches/* ./patches/
+COPY platform/ ./platform/
 
 # Install dependencies (bao gồm devDependencies) nhưng bỏ qua lifecycle scripts để tránh lỗi build sớm
-RUN npm ci --ignore-scripts
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -47,7 +49,7 @@ ARG MM_SERVICESETTINGS_SITEURL=http://localhost:8065
 ENV MM_SERVICESETTINGS_SITEURL=${MM_SERVICESETTINGS_SITEURL}
 
 # Sau khi có đầy đủ mã nguồn, chạy rebuild native modules và postinstall (patch-package + build workspaces)
-RUN npm rebuild --workspaces --if-present && npm run postinstall && npm run build
+RUN npm run build
 
 # Stage 2: Production stage với nginx
 FROM nginx:alpine
