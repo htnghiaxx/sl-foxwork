@@ -29,6 +29,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY channels/package*.json ./channels/
 COPY platform/*/package*.json ./platform/*/
+COPY patches/* ./patches/
 
 # Install dependencies (bao gồm devDependencies để chạy patch-package)
 RUN npm ci
