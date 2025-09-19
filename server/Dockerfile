@@ -18,7 +18,7 @@ WORKDIR /app
 ENV GOWORK=auto
 
 # Copy go.mod, go.sum và go.work trước để tối ưu cache deps và đồng bộ workspace
-COPY go.mod go.sum ./
+COPY go.mod go.sum go.work ./
 
 # Copy source code
 COPY . .
