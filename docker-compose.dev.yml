@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # Mattermost Server
+  mattermost-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: mattermost-server-dev
+    ports:
+      - "8065:8065"
+      - "8067:8067"
+      - "8074:8074"
+      - "8075:8075"
+    volumes:
+      - ./server/config:/mattermost/config
+      - ./server/data:/mattermost/data
+      - ./server/logs:/mattermost/logs
+      - ./server/plugins:/mattermost/plugins
+      - ./server/client/plugins:/mattermost/client/plugins
+    environment:
+      - MM_SERVICESETTINGS_SITEURL=http://localhost:8065
+      - MM_SERVICESETTINGS_LISTENADDRESS=:8065
+      - MM_SQLSETTINGS_DRIVERNAME=postgres
+      - MM_SQLSETTINGS_DATASOURCE=postgres://mmuser:mostest@postgres:5432/mattermost_test?sslmode=disable&connect_timeout=10
+    depends_on:
+      - postgres
+    networks:
+      - mattermost-network
+
+  # Mattermost Webapp
+  mattermost-webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile.dev
+    container_name: mattermost-webapp-dev
+    ports:
+      - "8080:80"
+    volumes:
+      - ./webapp/channels/dist:/usr/share/nginx/html
+    depends_on:
+      - mattermost-server
+    networks:
+      - mattermost-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:13-alpine
+    container_name: mattermost-postgres-dev
+    environment:
+      - POSTGRES_DB=mattermost_test
+      - POSTGRES_USER=mmuser
+      - POSTGRES_PASSWORD=mostest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - mattermost-network
+
+volumes:
+  postgres_data:
+
+networks:
+  mattermost-network:
+    driver: bridge

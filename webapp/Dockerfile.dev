@@ -1,0 +1,58 @@
+# Dockerfile cho Mattermost Webapp Development
+# Dựa trên package.json và build scripts
+
+# Stage 1: Build stage
+FROM node:18-alpine AS builder
+
+# Cài đặt dependencies cần thiết cho build
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    gcc \
+    libc-dev \
+    libpng-dev \
+    nasm
+
+# Tạo thư mục làm việc
+WORKDIR /app
+
+# Copy package files để cache dependencies
+COPY package*.json ./
+COPY channels/package*.json ./channels/
+COPY platform/*/package*.json ./platform/*/
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy source code
+COPY . .
+
+# Build webapp theo cấu hình package.json
+# Script: "build": "node scripts/build.mjs"
+RUN npm run build
+
+# Stage 2: Production stage với nginx
+FROM nginx:alpine
+
+# Cài đặt curl cho health check
+RUN apk add --no-cache curl
+
+# Copy built files từ builder stage
+COPY --from=builder /app/channels/dist /usr/share/nginx/html
+
+# Copy nginx config (tạo file cấu hình nginx tùy chỉnh nếu cần)
+# COPY nginx.conf /etc/nginx/nginx.conf
+
+# Tạo thư mục cho static files
+RUN mkdir -p /usr/share/nginx/html/static
+
+# Expose port
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
