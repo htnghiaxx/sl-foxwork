@@ -18,10 +18,18 @@ func MakeWorker(jobServer *jobs.JobServer, app AppIface) *jobs.SimpleWorker {
 	const workerName = "PostPersistentNotifications"
 
 	isEnabled := func(_ *model.Config) bool {
+		if app == nil {
+			return false
+		}
 		return app.IsPersistentNotificationsEnabled()
 	}
 	execute := func(logger mlog.LoggerIFace, job *model.Job) error {
 		defer jobServer.HandleJobPanic(logger, job)
+
+		if app == nil {
+			return model.NewAppError("PostPersistentNotificationsWorker", "app.post_persistent_notifications_worker.app_nil", nil, "App instance is nil", 500)
+		}
+
 		return app.SendPersistentNotifications()
 	}
 	worker := jobs.NewSimpleWorker(workerName, jobServer, execute, isEnabled)

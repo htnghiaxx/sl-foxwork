@@ -22,6 +22,10 @@ func MakeWorker(jobServer *jobs.JobServer, license *model.License, app AppIface)
 	execute := func(logger mlog.LoggerIFace, job *model.Job) error {
 		defer jobServer.HandleJobPanic(logger, job)
 
+		if app == nil {
+			return model.NewAppError("LastAccessibleFileWorker", "app.last_accessible_file_worker.app_nil", nil, "App instance is nil", 500)
+		}
+
 		return app.ComputeLastAccessibleFileTime()
 	}
 	worker := jobs.NewSimpleWorker(workerName, jobServer, execute, isEnabled)
