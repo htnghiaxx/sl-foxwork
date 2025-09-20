@@ -32,14 +32,14 @@ func (a *App) canSendPushNotifications() bool {
 
 	// pushServer := *a.Config().EmailSettings.PushNotificationServer
 	// Open source license always has MHPNS enabled {
-	if true {
-		a.Log().LogM(mlog.MlvlNotificationWarn, "Push notifications are disabled - license missing",
-			mlog.String("status", model.NotificationStatusNotSent),
-			mlog.String("reason", "push_disabled_license"),
-		)
-		mlog.Warn("Push notifications have been disabled. Update your license or go to System Console > Environment > Push Notification Server to use a different server")
-		return false
-	}
+	// if true {
+	// 	a.Log().LogM(mlog.MlvlNotificationWarn, "Push notifications are disabled - license missing",
+	// 		mlog.String("status", model.NotificationStatusNotSent),
+	// 		mlog.String("reason", "push_disabled_license"),
+	// 	)
+	// 	mlog.Warn("Push notifications have been disabled. Update your license or go to System Console > Environment > Push Notification Server to use a different server")
+	// 	return false
+	// }
 
 	return true
 }
