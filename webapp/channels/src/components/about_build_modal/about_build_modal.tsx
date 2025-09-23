@@ -289,16 +289,16 @@ export default class AboutBuildModal extends React.PureComponent<Props, State> {
                 </Modal.Header>
                 <Modal.Body>
                     <div className='about-modal__content'>
-                        <div className='about-modal__logo'>
+                        {/* <div className='about-modal__logo'>
                             <MattermostLogo/>
-                        </div>
+                        </div> */}
                         <div>
                             <h3 className='about-modal__title'>
                                 <strong>
-                                    {'Mattermost'} {title}
+                                    {'Foxwork'}
                                 </strong>
                             </h3>
-                            <p className='about-modal__subtitle pb-2'>
+                            {/* <p className='about-modal__subtitle pb-2'>
                                 {subTitle}
                             </p>
                             <div className='form-group less'>
@@ -328,15 +328,15 @@ export default class AboutBuildModal extends React.PureComponent<Props, State> {
                                         defaultMessage='Database:'
                                     />
                                     {'\u00a0' + config.SQLDriverName}
-                                </div>
-                                {serverHostname}
-                            </div>
-                            {licensee}
+                                </div> */}
+                                {/* {serverHostname}
+                            </div> */}
+                            {/* {licensee} */}
                         </div>
                     </div>
-                    <div className='about-modal__footer'>
-                        {learnMore}
-                        <div className='form-group'>
+                    {/* <div className='about-modal__footer'> */}
+                        {/* {learnMore} */}
+                        {/* <div className='form-group'>
                             <div className='about-modal__copyright'>
                                 <FormattedMessage
                                     id='about.copyright'
@@ -351,9 +351,9 @@ export default class AboutBuildModal extends React.PureComponent<Props, State> {
                                 {' - '}
                                 {privacyPolicy}
                             </div>
-                        </div>
-                    </div>
-                    <div className='about-modal__notice form-group pt-3'>
+                        </div> */}
+                    {/* </div> */}
+                    {/* <div className='about-modal__notice form-group pt-3'>
                         <p>
                             <FormattedMessage
                                 id='about.notice'
@@ -411,7 +411,7 @@ export default class AboutBuildModal extends React.PureComponent<Props, State> {
                             <Nbsp/>
                             {config.BuildDate}
                         </p>
-                    </div>
+                    </div> */}
                 </Modal.Body>
             </Modal>
         );
