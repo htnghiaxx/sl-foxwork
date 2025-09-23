@@ -271,7 +271,7 @@ const OnBoardingTaskList = (): JSX.Element | null => {
                             <h1>
                                 <FormattedMessage
                                     id='next_steps_view.welcomeToMattermost'
-                                    defaultMessage='Welcome to Mattermost'
+                                    defaultMessage='Welcome to FoxWork'
                                 />
                             </h1>
                             <p>
