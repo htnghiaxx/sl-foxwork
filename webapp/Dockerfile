@@ -45,8 +45,7 @@ COPY . .
 
 # Set build environment variables
 # MM_SERVICESETTINGS_SITEURL cần thiết cho webpack config để xác định publicPath
-ARG MM_SERVICESETTINGS_SITEURL=http://localhost:8065
-ENV MM_SERVICESETTINGS_SITEURL=${MM_SERVICESETTINGS_SITEURL}
+ENV MM_SERVICESETTINGS_SITEURL=https://work.foxia.vn
 
 # Sau khi có đầy đủ mã nguồn, chạy rebuild native modules và postinstall (patch-package + build workspaces)
 RUN npm run build
