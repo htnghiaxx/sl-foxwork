@@ -154,12 +154,12 @@ const ProductMenu = (): JSX.Element => {
                         destination={'/'}
                         icon={'product-channels'}
                         text={'Channels'}
-                        active={isChannels(currentProductID)}
+                        active={isChannels(currentProductID) && !location.pathname.startsWith('/email')}
                         onClick={handleClick}
                     />
                     <ProductMenuItem
                         destination={'/email'}
-                        icon={'product-channels'}
+                        icon={'email-outline'}
                         text={'Email'}
                         active={location.pathname.startsWith('/email')}
                         onClick={handleClick}

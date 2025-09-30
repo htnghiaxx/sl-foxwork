@@ -428,10 +428,13 @@ export default class Root extends React.PureComponent<Props, State> {
                         <TeamSidebar/>
                         <div className='main-wrapper'>
                             <Switch>
-                                <LoggedInRoute
-                                    path={'/email'}
-                                    component={EmailProduct}
-                                />
+                                <Route path={'/email'}>
+                                    <LoggedIn>
+                                        <div className={classNames(['product-wrapper', {wide: true}])}>
+                                            <EmailProduct/>
+                                        </div>
+                                    </LoggedIn>
+                                </Route>
                                 {this.props.products?.filter((product) => Boolean(product.publicComponent)).map((product) => (
                                     <Route
                                         key={`${product.id}-public`}
