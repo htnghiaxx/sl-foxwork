@@ -24,6 +24,7 @@ import LoggedInRoute from 'components/logged_in_route';
 import {LAUNCHING_WORKSPACE_FULLSCREEN_Z_INDEX} from 'components/preparing_workspace/launching_workspace';
 import {Animations} from 'components/preparing_workspace/steps';
 import Readout from 'components/readout/readout';
+import EmailProduct from 'components/email_product';
 
 import webSocketClient from 'client/web_websocket_client';
 import {initializePlugins} from 'plugins';
@@ -427,6 +428,10 @@ export default class Root extends React.PureComponent<Props, State> {
                         <TeamSidebar/>
                         <div className='main-wrapper'>
                             <Switch>
+                                <LoggedInRoute
+                                    path={'/email'}
+                                    component={EmailProduct}
+                                />
                                 {this.props.products?.filter((product) => Boolean(product.publicComponent)).map((product) => (
                                     <Route
                                         key={`${product.id}-public`}

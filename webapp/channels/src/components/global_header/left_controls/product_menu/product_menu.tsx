@@ -2,6 +2,7 @@
 // See LICENSE.txt for license information.
 
 import React, {useRef} from 'react';
+import {useLocation} from 'react-router-dom';
 import {useIntl} from 'react-intl';
 import {useDispatch, useSelector} from 'react-redux';
 import styled from 'styled-components';
@@ -78,6 +79,7 @@ const ProductMenu = (): JSX.Element => {
     const menuRef = useRef<HTMLDivElement>(null);
     const currentProductID = useCurrentProductId();
     const license = useSelector(getLicense);
+    const location = useLocation();
 
     const handleClick = () => dispatch(setProductMenuSwitcherOpen(!switcherOpen));
 
@@ -153,6 +155,13 @@ const ProductMenu = (): JSX.Element => {
                         icon={'product-channels'}
                         text={'Channels'}
                         active={isChannels(currentProductID)}
+                        onClick={handleClick}
+                    />
+                    <ProductMenuItem
+                        destination={'/email'}
+                        icon={'product-channels'}
+                        text={'Email'}
+                        active={location.pathname.startsWith('/email')}
                         onClick={handleClick}
                     />
                     {productItems}

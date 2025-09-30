@@ -13,7 +13,7 @@ tmp_dir = "tmp"
 
 [build]
   # Build the Mattermost server binary (working dir: server/)
-  cmd = "go build -o ./tmp/mattermost-dev ./cmd/mattermost"
+  cmd = "GOFLAGS='-mod=readonly' go build -o ./tmp/mattermost-dev ./cmd/mattermost"
   bin = "tmp/mattermost-dev"
 
   # Pass config path relative to server/
