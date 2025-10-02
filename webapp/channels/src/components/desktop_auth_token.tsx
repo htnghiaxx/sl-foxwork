@@ -74,10 +74,7 @@ const DesktopAuthToken: React.FC<Props> = ({href, onLogin}: Props) => {
 
     const forwardToDesktopApp = () => {
         const url = new URL(window.location.href);
-        let protocol = 'mattermost';
-        if (url.searchParams.get('isDesktopDev')) {
-            protocol = 'mattermost-dev';
-        }
+        const protocol = 'foxwork';
 
         window.location.href = url.toString().replace(url.protocol, `${protocol}:`);
     };
