@@ -640,10 +640,59 @@ func (a *App) LoginByOAuth(rctx request.CTX, service string, userData io.Reader,
 			map[string]any{"Service": service}, "", http.StatusBadRequest)
 	}
 
-	user, err := a.GetUserByAuth(model.NewPointer(*authUser.AuthData), service)
+	// Normalize service used for lookup/creation to the authUser.AuthService when available
+	lookupService := service
+	if authUser.AuthService != "" {
+		lookupService = authUser.AuthService
+	}
+	// First, try to map by email if available to avoid creating a duplicate user
+	if authUser.Email != "" {
+		if userByEmail, _ := a.ch.srv.userService.GetUserByEmail(authUser.Email); userByEmail != nil {
+			// Prevent bot login
+			if userByEmail.IsBot {
+				return nil, model.NewAppError("loginByOAuth", "api.user.login_by_oauth.bot_login_forbidden.app_error", nil, "", http.StatusForbidden)
+			}
+			// If existing account is email/password (no AuthService), migrate it to this SSO using email match
+			if userByEmail.AuthService == "" {
+				if _, nErr := a.Srv().Store().User().UpdateAuthData(userByEmail.Id, lookupService, authUser.AuthData, authUser.Email, true); nErr != nil {
+					var invErr *store.ErrInvalidInput
+					switch {
+					case errors.As(nErr, &invErr):
+						return nil, model.NewAppError("LoginByOAuth", "app.user.update_auth_data.email_exists.app_error", nil, "", http.StatusBadRequest).Wrap(nErr)
+					default:
+						return nil, model.NewAppError("LoginByOAuth", "app.user.update_auth_data.app_error", nil, "", http.StatusInternalServerError).Wrap(nErr)
+					}
+				}
+				// Update user attrs and team membership, then return
+				if err = a.UpdateOAuthUserAttrs(rctx, bytes.NewReader(buf.Bytes()), userByEmail, provider, lookupService, tokenUser); err != nil {
+					return nil, err
+				}
+				if err = a.AddUserToTeamByInviteIfNeeded(rctx, userByEmail, inviteToken, inviteId); err != nil {
+					rctx.Logger().Warn("Failed to add user to team", mlog.Err(err))
+				}
+				return userByEmail, nil
+			}
+			// If existing account already has an AuthService, allow linking if provider confirms same user (by email or authdata)
+			if provider.IsSameUser(rctx, userByEmail, authUser) {
+				if _, nErr := a.Srv().Store().User().UpdateAuthData(userByEmail.Id, lookupService, authUser.AuthData, "", false); nErr != nil {
+					// warn but allow login to proceed
+					rctx.Logger().Warn("Error attempting to update user AuthData during email map", mlog.Err(nErr))
+				}
+				if err = a.UpdateOAuthUserAttrs(rctx, bytes.NewReader(buf.Bytes()), userByEmail, provider, lookupService, tokenUser); err != nil {
+					return nil, err
+				}
+				if err = a.AddUserToTeamByInviteIfNeeded(rctx, userByEmail, inviteToken, inviteId); err != nil {
+					rctx.Logger().Warn("Failed to add user to team", mlog.Err(err))
+				}
+				return userByEmail, nil
+			}
+		}
+	}
+
+	user, err := a.GetUserByAuth(model.NewPointer(*authUser.AuthData), lookupService)
 	if err != nil {
 		if err.Id == MissingAuthAccountError {
-			user, err = a.CreateOAuthUser(rctx, service, bytes.NewReader(buf.Bytes()), inviteToken, inviteId, tokenUser)
+			user, err = a.CreateOAuthUser(rctx, lookupService, bytes.NewReader(buf.Bytes()), inviteToken, inviteId, tokenUser)
 		} else {
 			return nil, err
 		}
@@ -655,7 +704,7 @@ func (a *App) LoginByOAuth(rctx request.CTX, service string, userData io.Reader,
 			return nil, model.NewAppError("loginByOAuth", "api.user.login_by_oauth.bot_login_forbidden.app_error", nil, "", http.StatusForbidden)
 		}
 
-		if err = a.UpdateOAuthUserAttrs(rctx, bytes.NewReader(buf.Bytes()), user, provider, service, tokenUser); err != nil {
+		if err = a.UpdateOAuthUserAttrs(rctx, bytes.NewReader(buf.Bytes()), user, provider, lookupService, tokenUser); err != nil {
 			return nil, err
 		}
 
