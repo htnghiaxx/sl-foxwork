@@ -645,6 +645,8 @@ func (a *App) LoginByOAuth(rctx request.CTX, service string, userData io.Reader,
 	if authUser.AuthService != "" {
 		lookupService = authUser.AuthService
 	}
+	// Predeclare err for use in early email-mapping branch
+	var err *model.AppError
 	// First, try to map by email if available to avoid creating a duplicate user
 	if authUser.Email != "" {
 		if userByEmail, _ := a.ch.srv.userService.GetUserByEmail(authUser.Email); userByEmail != nil {
