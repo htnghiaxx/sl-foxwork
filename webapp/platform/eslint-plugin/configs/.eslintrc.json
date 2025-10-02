@@ -230,10 +230,7 @@
       }
     ],
     "indent": 0, // Handled by @typescript-eslint/indent
-    "jsx-quotes": [
-      2,
-      "prefer-single"
-    ],
+    "jsx-quotes": 0,
     "key-spacing": [
       2,
       {
@@ -444,10 +441,7 @@
     "no-whitespace-before-property": 2,
     "no-with": 2,
     "object-curly-newline": 0,
-    "object-curly-spacing": [
-      2,
-      "never"
-    ],
+    "object-curly-spacing":0,
     "object-property-newline": [
       2,
       {
@@ -487,11 +481,7 @@
       2,
       "as-needed"
     ],
-    "quotes": [
-      2,
-      "single",
-      "avoid-escape"
-    ],
+    "quotes": 0,
     "radix": 2,
     "require-yield": 2,
     "rest-spread-spacing": [
