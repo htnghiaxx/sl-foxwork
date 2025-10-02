@@ -86,11 +86,9 @@ func userFromOpenID(logger mlog.LoggerIFace, oi *openIDUser) (*model.User, error
 		}
 	}
 
-	// Auth linkage
-	authData := oi.Subject
-	if authData == "" {
-		authData = user.Email
-	}
+	// Auth linkage: always use email as AuthData (lowercased). If email missing,
+	// fallback to the synthetic email set above so it's stable.
+	authData := user.Email
 	user.AuthData = &authData
 	user.AuthService = model.ServiceOpenid
 
