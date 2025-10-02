@@ -47,13 +47,17 @@ func userFromOpenID(logger mlog.LoggerIFace, oi *openIDUser) (*model.User, error
 
 	user := &model.User{}
 
-	// Username preference: preferred_username -> email local-part -> sub
-	username := oi.PreferredUsername
-	if username == "" && oi.Email != "" {
+	// Username preference: email local-part -> preferred_username -> sub
+	// Always try to base username on email local-part when available.
+	username := ""
+	if oi.Email != "" {
 		at := strings.Index(oi.Email, "@")
 		if at > 0 {
 			username = oi.Email[:at]
 		}
+	}
+	if username == "" && oi.PreferredUsername != "" {
+		username = oi.PreferredUsername
 	}
 	if username == "" {
 		username = oi.Subject
@@ -167,5 +171,10 @@ func (op *OpenIDProvider) GetUserFromIdToken(_ request.CTX, idToken string) (*mo
 }
 
 func (op *OpenIDProvider) IsSameUser(_ request.CTX, dbUser, oauthUser *model.User) bool {
+	// Consider users the same if emails match (case-insensitive),
+	// or if AuthData matches as a fallback.
+	if strings.EqualFold(dbUser.Email, oauthUser.Email) && dbUser.Email != "" && oauthUser.Email != "" {
+		return true
+	}
 	return dbUser.AuthData == oauthUser.AuthData
 }
