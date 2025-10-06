@@ -1950,20 +1950,63 @@ func login(c *Context, w http.ResponseWriter, r *http.Request) {
 				if username == "" {
 					username = loginId
 				}
-				email := fmt.Sprintf("odoo_%d@odoo.local", authRes.UID)
+				// Use loginId as email if it contains @, otherwise use generated email
+				email := loginId
+				if !strings.Contains(email, "@") {
+					email = fmt.Sprintf("odoo_%d@odoo.local", authRes.UID)
+				}
 				mmUser, _ := c.App.GetUserByEmail(email)
 				if mmUser == nil {
-					u := &model.User{
-						Username:    model.CleanUsername(c.Logger, strings.Split(username, "@")[0]),
-						Email:       email,
-						FirstName:   displayName,
-						AuthService: "odoo",
+					// Check if user exists with old Odoo email format
+					oldEmail := fmt.Sprintf("odoo_%d@odoo.local", authRes.UID)
+					mmUser, _ = c.App.GetUserByEmail(oldEmail)
+					if mmUser != nil {
+						// Update existing user with old email to use real email
+						mmUser.Email = email
+						mmUser.FirstName = displayName
+						mmUser.AuthService = "odoo"
+						if username != "" {
+							mmUser.Username = model.CleanUsername(c.Logger, strings.Split(username, "@")[0])
+							if mmUser.Username == "" {
+								mmUser.Username = model.NewId()[:12]
+							}
+						}
+						var cerr *model.AppError
+						mmUser, cerr = c.App.UpdateUser(c.AppContext, mmUser, true)
+						if cerr != nil {
+							c.Err = cerr
+							return
+						}
+					} else {
+						// Create new user with real email from Odoo
+						u := &model.User{
+							Username:    model.CleanUsername(c.Logger, strings.Split(username, "@")[0]),
+							Email:       email,
+							FirstName:   displayName,
+							AuthService: "odoo",
+						}
+						if u.Username == "" {
+							u.Username = model.NewId()[:12]
+						}
+						var cerr *model.AppError
+						mmUser, cerr = c.App.CreateUser(c.AppContext, u)
+						if cerr != nil {
+							c.Err = cerr
+							return
+						}
 					}
-					if u.Username == "" {
-						u.Username = model.NewId()[:12]
+				} else {
+					// Update existing user with latest info from Odoo
+					mmUser.FirstName = displayName
+					mmUser.AuthService = "odoo"
+					if username != "" {
+						mmUser.Username = model.CleanUsername(c.Logger, strings.Split(username, "@")[0])
+						if mmUser.Username == "" {
+							mmUser.Username = model.NewId()[:12]
+						}
 					}
 					var cerr *model.AppError
-					mmUser, cerr = c.App.CreateUser(c.AppContext, u)
+					mmUser, cerr = c.App.UpdateUser(c.AppContext, mmUser, true)
 					if cerr != nil {
 						c.Err = cerr
 						return
